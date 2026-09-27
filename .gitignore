@@ -44,3 +44,6 @@ Thumbs.db
 *.log
 *.swp
 *~
+
+# Probe
+src/client/java/dev/koifih/client/bench/
