@@ -42,7 +42,7 @@ public final class Notifications extends Module {
     private static final float FADE = 0.3f;
     private static final float ALPHA = 0.9f;
 
-    private record Toast(Module module, boolean enabled, long shownAt, Transition reveal, Transition depth) {}
+    private record Toast(AdinIcon icon, String text, boolean enabled, long shownAt, Transition reveal, Transition depth) {}
 
     private final TextColorSettings colors = add(new TextColorSettings());
     private final List<Toast> toasts = new ArrayList<>();
@@ -62,17 +62,25 @@ public final class Notifications extends Module {
         toasts.clear();
     }
 
+    public void alert(Module source, String message) {
+        if (!isEnabled()) return;
+        Watermark island = AdinClient.MODULES.get(Watermark.class);
+        if (island.isEnabled()) island.showAlert(source, message);
+        else push(AdinIcon.ALERT, message, true);
+    }
+
     private void push(Module module, boolean enabled) {
         Watermark island = AdinClient.MODULES.get(Watermark.class);
-        if (island.isEnabled()) {
-            island.showToggle(module, enabled);
-            return;
-        }
+        if (island.isEnabled()) island.showToggle(module, enabled);
+        else push(module.category().icon(), module.name(), enabled);
+    }
+
+    private void push(AdinIcon icon, String text, boolean enabled) {
         for (Toast toast : toasts) toast.depth().set(toast.depth().target() + 1f);
         Transition reveal = new Transition(0f, ENTER_MILLIS, EXIT_MILLIS,
                 Transition.Easing.EASE_OUT_CUBIC, Transition.Easing.EASE_IN_CUBIC);
         reveal.set(1f);
-        toasts.add(new Toast(module, enabled, System.nanoTime(), reveal, new Transition(0f, DEPTH_MILLIS)));
+        toasts.add(new Toast(icon, text, enabled, System.nanoTime(), reveal, new Transition(0f, DEPTH_MILLIS)));
     }
 
     private void onHudRender(HudRenderEvent event) {
@@ -95,7 +103,7 @@ public final class Notifications extends Module {
         float depth = toast.depth().value();
         float textSize = TEXT_SIZE * scale;
         int height = Math.max(1, Math.round(HEIGHT * scale));
-        float width = (PADDING + ICON_SIZE + ICON_GAP + END_PADDING) * scale + Text.width(toast.module().name(), textSize);
+        float width = (PADDING + ICON_SIZE + ICON_GAP + END_PADDING) * scale + Text.width(toast.text(), textSize);
         float x = centerX - width * 0.5f;
         float y = (TOP - PEEK * depth - LIFT * (1f - shown)) * scale;
         float centerY = y + height * 0.5f;
@@ -112,8 +120,8 @@ public final class Notifications extends Module {
         float iconX = x + PADDING * scale;
         float textX = iconX + icon + ICON_GAP * scale;
         float textSize = TEXT_SIZE * scale;
-        String name = toast.module().name();
-        AdinIcon glyph = toast.module().category().icon();
+        String name = toast.text();
+        AdinIcon glyph = toast.icon();
         if (toast.enabled()) {
             Draw.icon(graphics, glyph, iconX, centerY - icon * 0.5f, icon,
                     Theme.DIM, color.at(iconX + icon * 0.5f), Theme.TEXT, Theme.MAIN);

@@ -1,10 +1,8 @@
 package dev.koifih.client.module.impl.combat;
 
 import dev.koifih.client.AdinClient;
-import dev.koifih.client.util.Clicks;
 import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.PreTickEvent;
-import dev.koifih.client.mixin.accessor.MultiPlayerGameModeAccessor;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
@@ -16,28 +14,25 @@ import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Hotbar;
 import dev.koifih.client.util.Placement;
+import dev.koifih.client.util.SlotSwap;
 import dev.koifih.client.util.ProjectilePrediction;
 import dev.koifih.client.util.Time;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.vehicle.minecart.MinecartTNT;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -64,8 +59,7 @@ public final class AutoCart extends Module {
     private BlockPos ground;
     private AbstractArrow tracked;
     private final Set<Integer> seenArrows = new HashSet<>();
-    private int originalSlot = Hotbar.NONE;
-    private boolean silent;
+    private final SlotSwap slots = new SlotSwap();
 
     public AutoCart() {
         super("autoCart");
@@ -126,7 +120,7 @@ public final class AutoCart extends Module {
         if (stage == Stage.IDLE) {
             AbstractArrow arrow = Game.playing(mc) && holdsFlameBow(player) ? firedArrow(player) : null;
             if (!pacer.ready()) return;
-            if (originalSlot != Hotbar.NONE) restore(player);
+            slots.restore(player, swapBack.get());
             if (arrow != null) {
                 tracked = arrow;
                 stage = Stage.TRACK;
@@ -141,6 +135,7 @@ public final class AutoCart extends Module {
             track(player);
             return;
         }
+        if (player.isUsingItem()) return;
         BlockPos rail = ground.above();
         BlockState state = mc.level.getBlockState(rail);
         if (stage == Stage.RAIL) {
@@ -149,7 +144,7 @@ public final class AutoCart extends Module {
             } else {
                 BlockHitResult hit = Placement.placeInto(mc.level, player.getEyePosition(), rail);
                 if (hit == null || !aimed(player, hit)) return;
-                if (use(player, hit, RAIL.and(stack -> placeable(player, stack, hit)), true)) stage = Stage.CART;
+                if (use(player, hit, RAIL.and(stack -> Placement.placeable(player, stack, hit)), true)) stage = Stage.CART;
                 return;
             }
         }
@@ -188,15 +183,6 @@ public final class AutoCart extends Module {
         return null;
     }
 
-    private static boolean placeable(LocalPlayer player, ItemStack stack, BlockHitResult hit) {
-        if (!(stack.getItem() instanceof BlockItem item)) return false;
-        BlockPlaceContext context = new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit);
-        if (!context.canPlace()) return false;
-        BlockState state = item.getBlock().getStateForPlacement(context);
-        return state != null && state.canSurvive(mc.level, context.getClickedPos())
-                && mc.level.isUnobstructed(state, context.getClickedPos(), CollisionContext.of(player));
-    }
-
     private static boolean holdsFlameBow(LocalPlayer player) {
         ItemStack stack = player.getMainHandItem();
         if (!stack.is(Items.BOW)) return false;
@@ -213,25 +199,8 @@ public final class AutoCart extends Module {
             return false;
         }
         if (!Placement.ready()) return false;
-        int selected = Hotbar.selected(player);
-        boolean quiet = originalSlot != Hotbar.NONE ? silent : silentSwap.get();
-        if (slot != (quiet ? Hotbar.serverSlot() : selected)) {
-            if (originalSlot == Hotbar.NONE) {
-                originalSlot = selected;
-                silent = quiet;
-            }
-            if (!Hotbar.swap(player, slot, quiet)) return false;
-        }
-        if (quiet && slot != selected) {
-            ItemStack stack = player.getInventory().getItem(slot);
-            ((MultiPlayerGameModeAccessor) mc.gameMode).adin$startPrediction(mc.level, sequence -> {
-                if (placing) Placement.predict(player, stack, hit);
-                return new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, sequence);
-            });
-        } else if (!Clicks.right(mc, hit)) {
-            mc.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
-        }
-        player.swing(InteractionHand.MAIN_HAND);
+        if (!slots.select(player, slot, silentSwap.get())) return false;
+        Placement.use(player, hit, slot, slots.quiet(player, slot, silentSwap.get()), placing);
         pacer.pace(delay.get());
         return true;
     }
@@ -240,15 +209,6 @@ public final class AutoCart extends Module {
         stage = Stage.IDLE;
         tracked = null;
         seenArrows.clear();
-        restore(player);
-    }
-
-    private void restore(LocalPlayer player) {
-        if (player != null && originalSlot != Hotbar.NONE) {
-            boolean done = silent ? Hotbar.resync(player) : !swapBack.get() || Hotbar.swap(player, originalSlot, false);
-            if (!done) return;
-        }
-        originalSlot = Hotbar.NONE;
-        silent = false;
+        slots.restore(player, swapBack.get());
     }
 }

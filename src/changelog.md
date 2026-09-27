@@ -1,0 +1,3 @@
+- Fixed Flags related to using at the same time as the feature
+- added XbowCart
+- Fixed rotations flagging AimModulo360

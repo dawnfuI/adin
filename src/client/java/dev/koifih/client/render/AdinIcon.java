@@ -33,5 +33,6 @@ public enum AdinIcon {
     END,
     DEEP_DARK,
     FPS,
-    USER
+    USER,
+    ALERT
 }

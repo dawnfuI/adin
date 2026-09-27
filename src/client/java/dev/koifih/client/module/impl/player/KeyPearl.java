@@ -47,7 +47,7 @@ public final class KeyPearl extends Module {
     @Override
     protected void onActivate() {
         LocalPlayer player = mc.player;
-        if (!Game.playing(mc)) return;
+        if (!Game.playing(mc) || player.isUsingItem()) return;
         int selected = Hotbar.selected(player);
         int slot = player.getMainHandItem().is(Items.ENDER_PEARL) ? selected : Hotbar.find(player, stack -> stack.is(Items.ENDER_PEARL));
         if (slot == Hotbar.NONE || player.getCooldowns().isOnCooldown(player.getInventory().getItem(slot))) return;

@@ -1,10 +1,13 @@
 package dev.koifih.client.util;
 
+import dev.koifih.client.mixin.accessor.MultiPlayerGameModeAccessor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundClientTickEndPacket;
 import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
@@ -18,12 +21,14 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Placement {
     private static final float DUPLICATE_ROTATION = 2f;
     private static final float DUPLICATE_TOLERANCE = 0.0001f;
+    private static final double DIAGONAL = 0.4;
 
     private static boolean placed;
     private static boolean rotated;
@@ -55,6 +60,16 @@ public final class Placement {
             best = nearer(eye, best, candidate(level, eye, against, face));
         }
         return best;
+    }
+
+    public static Vec3i sideToward(BlockPos pos, Vec3 eye) {
+        Vec3 offset = eye.subtract(Vec3.atCenterOf(pos));
+        double x = Math.abs(offset.x);
+        double z = Math.abs(offset.z);
+        boolean diagonal = Math.min(x, z) > DIAGONAL * Math.max(x, z);
+        int stepX = diagonal || x >= z ? (int) Math.signum(offset.x) : 0;
+        int stepZ = diagonal || z > x ? (int) Math.signum(offset.z) : 0;
+        return new Vec3i(stepX, 0, stepZ);
     }
 
     public static BlockHitResult clickOn(Level level, Vec3 eye, BlockPos block) {
@@ -109,6 +124,30 @@ public final class Placement {
             case WEST -> new Vec3(box.minX, center.y, center.z);
             case EAST -> new Vec3(box.maxX, center.y, center.z);
         };
+    }
+
+    public static boolean placeable(LocalPlayer player, ItemStack stack, BlockHitResult hit) {
+        if (!(stack.getItem() instanceof BlockItem item)) return false;
+        BlockPlaceContext context = new BlockPlaceContext(player, InteractionHand.MAIN_HAND, stack, hit);
+        if (!context.canPlace()) return false;
+        BlockState state = item.getBlock().getStateForPlacement(context);
+        Level level = player.level();
+        return state != null && state.canSurvive(level, context.getClickedPos())
+                && level.isUnobstructed(state, context.getClickedPos(), CollisionContext.of(player));
+    }
+
+    public static void use(LocalPlayer player, BlockHitResult hit, int slot, boolean quiet, boolean placing) {
+        Minecraft client = Game.mc();
+        if (quiet) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            ((MultiPlayerGameModeAccessor) client.gameMode).adin$startPrediction(client.level, sequence -> {
+                if (placing) predict(player, stack, hit);
+                return new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, sequence);
+            });
+        } else if (!Clicks.right(client, hit)) {
+            client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
+        }
+        player.swing(InteractionHand.MAIN_HAND);
     }
 
     public static void predict(LocalPlayer player, ItemStack stack, BlockHitResult hit) {

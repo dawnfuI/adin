@@ -42,7 +42,7 @@ public final class Watermark extends HudModule {
     private final Transition cardShown = new Transition(0f, 300, 160, Easing.EASE_OUT_CUBIC, Easing.EASE_OUT_CUBIC);
     private final Stats stats = new Stats();
     private boolean opened;
-    private ToggleCard card;
+    private Card card;
 
     public Watermark() {
         super("watermark", Anchor.CENTER, Anchor.START, 0f, TOP);
@@ -50,8 +50,16 @@ public final class Watermark extends HudModule {
 
     public void showToggle(Module module, boolean enabled) {
         if (module == this) return;
-        if (card != null && card.shows(module)) card.update(enabled);
-        else card = new ToggleCard(module, enabled);
+        if (card instanceof ToggleCard toggle && toggle.shows(module)) toggle.update(enabled);
+        else show(new ToggleCard(module, enabled));
+    }
+
+    public void showAlert(Module source, String message) {
+        show(new AlertCard(source.name(), message));
+    }
+
+    private void show(Card next) {
+        card = next;
         cardShown.set(1f);
         statsShown.set(0f);
     }
@@ -83,8 +91,8 @@ public final class Watermark extends HudModule {
             height.snap(IDLE_HEIGHT * scale);
             opened = true;
         }
-        width.set(expanded ? ToggleCard.WIDTH * scale : statsWidth);
-        height.set((expanded ? ToggleCard.HEIGHT : IDLE_HEIGHT) * scale);
+        width.set(expanded ? card.width(scale) : statsWidth);
+        height.set((expanded ? Card.HEIGHT : IDLE_HEIGHT) * scale);
         float w = Math.max(width.update(), MIN_SIZE * scale);
         float h = Math.max(height.update(), MIN_SIZE * scale);
         var window = mc.getWindow();
@@ -107,7 +115,7 @@ public final class Watermark extends HudModule {
         Scissor.clip(area, () -> {
             reveal(graphics, statsShown.value(), centerX, centerY,
                     () -> stats.draw(graphics, centerX - statsWidth * 0.5f, centerY, scale, hero));
-            ToggleCard shown = card;
+            Card shown = card;
             if (shown != null) reveal(graphics, cardShown.value(), centerX, centerY,
                     () -> shown.draw(graphics, x, centerY, w, scale, hero));
         });

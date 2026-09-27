@@ -5,6 +5,7 @@ import dev.koifih.client.AdinClient;
 import dev.koifih.client.event.events.PacketProcessEvent;
 import dev.koifih.client.module.impl.combat.AimAssist;
 import dev.koifih.client.util.Clicks;
+import dev.koifih.client.util.Hotbar;
 import dev.koifih.client.util.Players;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
@@ -24,20 +25,39 @@ public abstract class MinecraftMixin {
     @Shadow public HitResult hitResult;
     @Shadow public MultiPlayerGameMode gameMode;
     @Shadow public LocalPlayer player;
+    @Unique private boolean adin$modulesActed;
+    @Unique private boolean adin$attacked;
+    @Unique private boolean adin$used;
 
     @Inject(method = "runTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/PacketProcessor;processQueuedPackets()V", shift = At.Shift.AFTER))
     private void adin$packetsProcessed(boolean renderLevel, CallbackInfo info) {
         AdinClient.EVENTS.post(new PacketProcessEvent((Minecraft) (Object) this));
     }
 
+    @Inject(method = "handleKeybinds", at = @At("HEAD"))
+    private void adin$handleKeybinds(CallbackInfo info) {
+        adin$modulesActed = Hotbar.acted();
+        adin$attacked = false;
+        adin$used = false;
+    }
+
+    @Inject(method = "handleKeybinds", at = @At("TAIL"))
+    private void adin$handledKeybinds(CallbackInfo info) {
+        adin$modulesActed = false;
+    }
+
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
     private void adin$startAttack(CallbackInfoReturnable<Boolean> info) {
-        if (adin$blocksBreaking() || adin$activates(GLFW.GLFW_MOUSE_BUTTON_LEFT)) info.setReturnValue(false);
+        boolean repeated = adin$attacked && Clicks.simulating(GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        adin$attacked = true;
+        if (adin$modulesActed || repeated || adin$blocksBreaking() || adin$activates(GLFW.GLFW_MOUSE_BUTTON_LEFT)) info.setReturnValue(false);
     }
 
     @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
     private void adin$startUseItem(CallbackInfo info) {
-        if (adin$activates(GLFW.GLFW_MOUSE_BUTTON_RIGHT) && !Players.consuming(player)) info.cancel();
+        boolean repeated = adin$used && Clicks.simulating(GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        adin$used = true;
+        if (adin$modulesActed || repeated || (adin$activates(GLFW.GLFW_MOUSE_BUTTON_RIGHT) && !Players.consuming(player))) info.cancel();
     }
 
     @Unique
@@ -47,7 +67,7 @@ public abstract class MinecraftMixin {
 
     @Inject(method = "continueAttack", at = @At("HEAD"), cancellable = true)
     private void adin$continueAttack(boolean leftClick, CallbackInfo info) {
-        if (adin$blocksBreaking()) info.cancel();
+        if (adin$modulesActed || adin$blocksBreaking()) info.cancel();
     }
 
     @Unique

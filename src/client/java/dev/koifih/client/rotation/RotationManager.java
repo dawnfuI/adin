@@ -44,6 +44,17 @@ public final class RotationManager {
         aim(RotationTarget.fixed(target), priority, config);
     }
 
+    public void face(LocalPlayer player, Rotation target, int priority, RotationConfig config) {
+        if (request != null && priority < request.priority()) return;
+        request = new Request(RotationTarget.fixed(target), priority, config);
+        if (config.silent()) {
+            current = distinct(quantized(lastSent.moved(lastSent.yawTo(target), lastSent.pitchTo(target))));
+            return;
+        }
+        Rotation actual = Rotation.of(player);
+        player.turn(actual.yawTo(target) / TURN_FACTOR, actual.pitchTo(target) / TURN_FACTOR);
+    }
+
     public boolean active() {
         return current != null;
     }

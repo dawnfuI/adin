@@ -30,6 +30,10 @@ public final class Hotbar {
     private static int silentSlot = NONE;
     private static int silentBase = NONE;
 
+    public static boolean acted() {
+        return acted;
+    }
+
     public static int selected(LocalPlayer player) {
         return player.getInventory().getSelectedSlot();
     }
