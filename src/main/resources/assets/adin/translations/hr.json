@@ -115,6 +115,8 @@
   "module.autoCrystal": "Auto Crystal",
   "module.autoCrystal.description": "Drži tipku da postavljaš i udaraš kristale",
   "setting.autoCrystal.headBob": "Njihanje glave",
+  "setting.autoCrystal.antiSuicide": "Anti samoubojstvo",
+  "setting.autoCrystal.antiSuicide.help": "Ne koristi kristale dok si u zraku ili barem 1 blok iznad kristala",
   "module.backtrack": "Backtrack",
   "module.backtrack.description": "Zadržava dolazne pakete da pogodiš igrače gdje su bili",
   "setting.backtrack.mode": "Način",

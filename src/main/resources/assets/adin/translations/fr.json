@@ -115,6 +115,8 @@
   "module.autoCrystal": "Auto Crystal",
   "module.autoCrystal.description": "Maintiens sa touche pour poser et frapper des cristaux",
   "setting.autoCrystal.headBob": "Mouvement de tête",
+  "setting.autoCrystal.antiSuicide": "Anti suicide",
+  "setting.autoCrystal.antiSuicide.help": "Bloque les cristaux quand tu es en l'air ou au moins 1 bloc au-dessus du cristal",
   "module.backtrack": "Backtrack",
   "module.backtrack.description": "Retient les paquets entrants pour que tu frappes les joueurs là où ils étaient",
   "setting.backtrack.mode": "Mode",

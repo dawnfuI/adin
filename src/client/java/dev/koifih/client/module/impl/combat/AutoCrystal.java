@@ -34,10 +34,12 @@ import net.minecraft.world.phys.Vec3;
 
 public final class AutoCrystal extends Module {
     private static final long SPAWN_TIMEOUT_MILLIS = 250;
+    private static final double UNSAFE_HEIGHT = 1.0;
     private static final RotationConfig SNAP = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
 
     private final SliderSetting delay = add(new SliderSetting("delay", 50, 50, 500, Measure.MILLIS));
     private final BoolSetting headBob = add(new BoolSetting("headBob", false));
+    private final BoolSetting antiSuicide = add(new BoolSetting("antiSuicide", false));
     private final BoolSetting silentSwap = add(new BoolSetting("silentSwap", false));
     private final BoolSetting swapBack = add(new BoolSetting("swapBack", true));
     private final Time.Ticker pacer = new Time.Ticker();
@@ -51,6 +53,7 @@ public final class AutoCrystal extends Module {
     public AutoCrystal() {
         super("autoCrystal");
         swapBack.visibleWhen(() -> !silentSwap.get());
+        antiSuicide.describe();
     }
 
     @Override
@@ -76,14 +79,16 @@ public final class AutoCrystal extends Module {
         LocalPlayer player = mc.player;
         if (!Game.playing(mc) || Players.consuming(player)) return;
         releasing = false;
+        if (antiSuicide.get() && !player.onGround()) return;
         if (headBob.get()) {
             bob(player);
             return;
         }
         if (!pacer.ready()) return;
         if (mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof EndCrystal crystal) {
-            attack(player, crystal);
-        } else if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && placeable(hit.getBlockPos())) {
+            if (!aboveCrystal(player, crystal.getY())) attack(player, crystal);
+        } else if (mc.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK && placeable(hit.getBlockPos())
+                && !aboveCrystal(player, hit.getBlockPos().getY() + 1)) {
             place(player, hit);
         }
     }
@@ -109,7 +114,7 @@ public final class AutoCrystal extends Module {
         if (crystal != null) {
             awaitingSpawn = false;
             next = crystal.getBoundingBox().getCenter();
-            if (ready && hits(crystal.getBoundingBox(), eye, look, player.entityInteractionRange())) {
+            if (ready && hits(crystal.getBoundingBox(), eye, look, player.entityInteractionRange()) && !aboveCrystal(player, crystal.getY())) {
                 attack(player, crystal);
                 hit = crystal;
                 next = top;
@@ -117,7 +122,8 @@ public final class AutoCrystal extends Module {
         } else if (mc.level.isEmptyBlock(above) && (!awaitingSpawn || sincePlace.elapsed(SPAWN_TIMEOUT_MILLIS))) {
             BlockHitResult spot = Placement.clickOn(mc.level, eye, base);
             next = spot == null ? top : spot.getLocation();
-            if (spot != null && ready && Placement.looksAt(mc.level, base, eye, look, player.blockInteractionRange()) && place(player, spot)) {
+            if (spot != null && ready && !aboveCrystal(player, above.getY())
+                    && Placement.looksAt(mc.level, base, eye, look, player.blockInteractionRange()) && place(player, spot)) {
                 sincePlace.reset();
                 awaitingSpawn = true;
                 next = center;
@@ -159,6 +165,10 @@ public final class AutoCrystal extends Module {
         if (!Clicks.left(mc, crystal)) mc.gameMode.attack(player, crystal);
         player.swing(InteractionHand.MAIN_HAND);
         pacer.pace(delay.get());
+    }
+
+    private boolean aboveCrystal(LocalPlayer player, double crystalY) {
+        return antiSuicide.get() && player.getY() >= crystalY + UNSAFE_HEIGHT;
     }
 
     public boolean holding() {

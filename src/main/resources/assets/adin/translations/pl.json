@@ -115,6 +115,8 @@
   "module.autoCrystal": "Auto Crystal",
   "module.autoCrystal.description": "Przytrzymaj klawisz, by stawiać i bić kryształy",
   "setting.autoCrystal.headBob": "Kołysanie głowy",
+  "setting.autoCrystal.antiSuicide": "Anty samobójstwo",
+  "setting.autoCrystal.antiSuicide.help": "Blokuje kryształy, gdy jesteś w powietrzu lub co najmniej 1 blok nad kryształem",
   "module.backtrack": "Backtrack",
   "module.backtrack.description": "Wstrzymuje przychodzące pakiety, żebyś trafiał graczy tam, gdzie byli",
   "setting.backtrack.mode": "Tryb",

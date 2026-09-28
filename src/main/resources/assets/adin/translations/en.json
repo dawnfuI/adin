@@ -115,6 +115,8 @@
   "module.autoCrystal": "Auto Crystal",
   "module.autoCrystal.description": "Hold its bind to place and hit crystals",
   "setting.autoCrystal.headBob": "Head bob",
+  "setting.autoCrystal.antiSuicide": "Anti suicide",
+  "setting.autoCrystal.antiSuicide.help": "Stops crystalling while you are in the air or at least 1 block above the crystal",
   "module.backtrack": "Backtrack",
   "module.backtrack.description": "Holds back incoming packets so you hit players where they were",
   "setting.backtrack.mode": "Mode",

@@ -115,6 +115,8 @@
   "module.autoCrystal": "Auto Crystal",
   "module.autoCrystal.description": "Удерживайте клавишу, чтобы ставить и бить кристаллы",
   "setting.autoCrystal.headBob": "Покачивание головы",
+  "setting.autoCrystal.antiSuicide": "Анти суицид",
+  "setting.autoCrystal.antiSuicide.help": "Не ставит кристаллы, пока ты в воздухе или хотя бы на 1 блок выше кристалла",
   "module.backtrack": "Backtrack",
   "module.backtrack.description": "Задерживает входящие пакеты, чтобы ты бил игроков там, где они были",
   "setting.backtrack.mode": "Режим",
