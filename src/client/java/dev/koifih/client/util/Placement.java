@@ -148,10 +148,11 @@ public final class Placement {
                 if (placing) predict(player, stack, hit);
                 return new ServerboundUseItemOnPacket(InteractionHand.MAIN_HAND, hit, sequence);
             });
+            player.swing(InteractionHand.MAIN_HAND);
         } else if (!Clicks.right(client, hit)) {
             client.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit);
+            player.swing(InteractionHand.MAIN_HAND);
         }
-        player.swing(InteractionHand.MAIN_HAND);
     }
 
     public static void predict(LocalPlayer player, ItemStack stack, BlockHitResult hit) {

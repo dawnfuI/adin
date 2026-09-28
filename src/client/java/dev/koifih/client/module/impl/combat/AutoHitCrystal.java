@@ -85,10 +85,11 @@ public final class AutoHitCrystal extends Module {
             });
             SoundType sound = Blocks.OBSIDIAN.defaultBlockState().getSoundType();
             mc.level.playSound(player, pos, sound.getPlaceSound(), SoundSource.BLOCKS, (sound.getVolume() + 1f) / 2f, sound.getPitch() * 0.8f);
-        } else if (!Clicks.right(mc, hit) && !mc.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit).consumesAction()) {
-            return;
+            player.swing(InteractionHand.MAIN_HAND);
+        } else if (!Clicks.right(mc, hit)) {
+            if (!mc.gameMode.useItemOn(player, InteractionHand.MAIN_HAND, hit).consumesAction()) return;
+            player.swing(InteractionHand.MAIN_HAND);
         }
-        player.swing(InteractionHand.MAIN_HAND);
         placed = true;
     }
 

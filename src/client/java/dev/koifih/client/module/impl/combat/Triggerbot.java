@@ -92,8 +92,10 @@ public final class Triggerbot extends Module {
         if (crits.get() && !critReady(client, player)) return;
         if (!charged(player, 0.5f)) return;
         AdinClient.MODULES.get(ShieldBreaker.class).prepare(player, target);
-        if (!Clicks.left(client, target)) client.gameMode.attack(player, target);
-        player.swing(InteractionHand.MAIN_HAND);
+        if (!Clicks.left(client, target)) {
+            client.gameMode.attack(player, target);
+            player.swing(InteractionHand.MAIN_HAND);
+        }
         holdingSprint = false;
         rearm();
     }

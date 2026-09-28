@@ -63,10 +63,11 @@ public final class KeyPearl extends Module {
         if (silent && slot != selected) {
             ((MultiPlayerGameModeAccessor) mc.gameMode).adin$startPrediction(mc.level,
                     sequence -> new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, sequence, player.getYRot(), player.getXRot()));
-        } else if (!Clicks.right(mc) && !mc.gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) {
-            return;
+            player.swing(InteractionHand.MAIN_HAND);
+        } else if (!Clicks.right(mc)) {
+            if (!mc.gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) return;
+            player.swing(InteractionHand.MAIN_HAND);
         }
-        player.swing(InteractionHand.MAIN_HAND);
         threw = true;
     }
 
