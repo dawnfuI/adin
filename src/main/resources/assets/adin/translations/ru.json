@@ -85,7 +85,7 @@
   "module.jumpReset.description": "Прыгает сразу после удара",
   "setting.jumpReset.chance": "Шанс",
   "module.sprintReset": "Sprint Reset",
-  "module.sprintReset.description": "Нажимает W или S после каждого удара для сброса спринта",
+  "module.sprintReset.description": "Нажимает W или S или приседает после каждого удара для сброса спринта",
   "setting.sprintReset.mode": "Режим",
   "setting.sprintReset.interval": "Интервал",
   "setting.sprintReset.groundOnly": "Только на земле",

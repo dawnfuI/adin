@@ -85,7 +85,7 @@
   "module.jumpReset.description": "Jumps right after you get hit",
   "setting.jumpReset.chance": "Chance",
   "module.sprintReset": "Sprint Reset",
-  "module.sprintReset.description": "Taps W or S after each hit to reset your sprint",
+  "module.sprintReset.description": "Taps W or S, or crouches, after each hit to reset your sprint",
   "setting.sprintReset.mode": "Mode",
   "setting.sprintReset.interval": "Interval",
   "setting.sprintReset.groundOnly": "Only on ground",

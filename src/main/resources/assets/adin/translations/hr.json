@@ -85,7 +85,7 @@
   "module.jumpReset.description": "Skače odmah nakon udarca",
   "setting.jumpReset.chance": "Šansa",
   "module.sprintReset": "Sprint Reset",
-  "module.sprintReset.description": "Stisne W ili S nakon svakog udarca za reset sprinta",
+  "module.sprintReset.description": "Stisne W ili S, ili čučne, nakon svakog udarca za reset sprinta",
   "setting.sprintReset.mode": "Način",
   "setting.sprintReset.interval": "Interval",
   "setting.sprintReset.groundOnly": "Samo na tlu",

@@ -85,7 +85,7 @@
   "module.jumpReset.description": "Saute juste après un coup reçu",
   "setting.jumpReset.chance": "Chance",
   "module.sprintReset": "Sprint Reset",
-  "module.sprintReset.description": "Tape W ou S après chaque coup pour relancer ton sprint",
+  "module.sprintReset.description": "Tape W ou S, ou s'accroupit, après chaque coup pour relancer ton sprint",
   "setting.sprintReset.mode": "Mode",
   "setting.sprintReset.interval": "Intervalle",
   "setting.sprintReset.groundOnly": "Seulement au sol",

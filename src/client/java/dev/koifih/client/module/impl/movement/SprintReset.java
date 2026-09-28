@@ -15,8 +15,9 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.player.LocalPlayer;
 
 public final class SprintReset extends Module {
-    private static final String[] MODES = {"W Tap", "S Tap"};
+    private static final String[] MODES = {"W Tap", "S Tap", "Crouch"};
     private static final int W_TAP = 0;
+    private static final int S_TAP = 1;
 
     private final EnumSetting mode = add(new EnumSetting("mode", W_TAP, MODES));
     private final SliderSetting interval = add(new SliderSetting("interval", 100, 50, 500, Measure.MILLIS));
@@ -60,8 +61,11 @@ public final class SprintReset extends Module {
             stop();
             return;
         }
-        if (mode.get() == W_TAP) mc.options.keyUp.setDown(false);
-        else mc.options.keyDown.setDown(true);
+        switch (mode.get()) {
+            case W_TAP -> mc.options.keyUp.setDown(false);
+            case S_TAP -> mc.options.keyDown.setDown(true);
+            default -> mc.options.keyShift.setDown(true);
+        }
     }
 
     private void stop() {
@@ -69,6 +73,7 @@ public final class SprintReset extends Module {
         resetting = false;
         restore(mc.options.keyUp);
         restore(mc.options.keyDown);
+        restore(mc.options.keyShift);
     }
 
     private static void restore(KeyMapping mapping) {

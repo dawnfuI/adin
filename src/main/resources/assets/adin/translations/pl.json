@@ -85,7 +85,7 @@
   "module.jumpReset.description": "Skacze zaraz po otrzymaniu ciosu",
   "setting.jumpReset.chance": "Szansa",
   "module.sprintReset": "Sprint Reset",
-  "module.sprintReset.description": "Wciska W lub S po każdym uderzeniu, by zresetować sprint",
+  "module.sprintReset.description": "Wciska W lub S albo kuca po każdym uderzeniu, by zresetować sprint",
   "setting.sprintReset.mode": "Tryb",
   "setting.sprintReset.interval": "Interwał",
   "setting.sprintReset.groundOnly": "Tylko na ziemi",
