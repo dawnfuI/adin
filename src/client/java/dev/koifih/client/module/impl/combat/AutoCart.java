@@ -40,10 +40,11 @@ import java.util.function.Predicate;
 public final class AutoCart extends Module {
     private static final String[] MODES = {"Normal", "Silent"};
     private static final int SILENT = 1;
-    private static final int DROP_SEARCH = 8;
+    private static final int MAX_GROUND_DROP = 8;
     private static final double CART_CLEARANCE = 1.0;
     private static final double ARROW_SEARCH = 8.0;
-    private static final double MOVING = 0.01;
+    private static final double MOVING_SPEED_SQR = 0.01;
+    private static final long RAIL_WAIT_DELAYS = 4;
     private static final Predicate<ItemStack> RAIL = stack -> stack.getItem() instanceof BlockItem item
             && item.getBlock().defaultBlockState().is(BlockTags.RAILS);
 
@@ -84,14 +85,14 @@ public final class AutoCart extends Module {
     private AbstractArrow firedArrow(LocalPlayer player) {
         AbstractArrow fired = null;
         for (AbstractArrow arrow : mc.level.getEntitiesOfClass(AbstractArrow.class, player.getBoundingBox().inflate(ARROW_SEARCH))) {
-            if (arrow.getOwner() != player || arrow.getDeltaMovement().lengthSqr() < MOVING || !seenArrows.add(arrow.getId())) continue;
+            if (arrow.getOwner() != player || arrow.getDeltaMovement().lengthSqr() < MOVING_SPEED_SQR || !seenArrows.add(arrow.getId())) continue;
             fired = arrow;
         }
         return fired;
     }
 
     private boolean flying(AbstractArrow arrow) {
-        return arrow != null && !arrow.isRemoved() && arrow.getDeltaMovement().lengthSqr() >= MOVING;
+        return arrow != null && !arrow.isRemoved() && arrow.getDeltaMovement().lengthSqr() >= MOVING_SPEED_SQR;
     }
 
     private void track(LocalPlayer player) {
@@ -149,7 +150,7 @@ public final class AutoCart extends Module {
             }
         }
         if (!state.is(BlockTags.RAILS)) {
-            if (pacer.elapsed(delay.get() * 4L)) stop(player);
+            if (pacer.elapsed(delay.get() * RAIL_WAIT_DELAYS)) stop(player);
             return;
         }
         BlockHitResult hit = Placement.clickOn(mc.level, player.getEyePosition(), rail);
@@ -174,7 +175,7 @@ public final class AutoCart extends Module {
         BlockPos start = landing.getDirection() == Direction.UP
                 ? landing.getBlockPos()
                 : landing.getBlockPos().relative(landing.getDirection()).below();
-        for (int drop = 0; drop < DROP_SEARCH; drop++) {
+        for (int drop = 0; drop < MAX_GROUND_DROP; drop++) {
             BlockPos candidate = start.below(drop);
             BlockState above = mc.level.getBlockState(candidate.above());
             if (!above.canBeReplaced() && !above.is(BlockTags.RAILS)) continue;

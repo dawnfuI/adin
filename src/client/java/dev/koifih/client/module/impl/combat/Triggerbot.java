@@ -20,12 +20,12 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class Triggerbot extends Module {
-    private static final float NEXT_TICK = 1.5f;
+    private static final float CHARGE_LOOKAHEAD_TICKS = 1.5f;
     private static final double GRAVITY = 0.08;
     private static final double DRAG = 0.98;
     private static final int FULL_CHARGE = 100;
     private static final int EXTRA_CHARGE = 125;
-    private static final float HUNDREDTHS = 100f;
+    private static final float PERCENT = 100f;
 
     private final RangeSetting cooldown = add(new RangeSetting("cooldown", 60, 100, 0, EXTRA_CHARGE, Measure.FRACTION));
     private final BoolSetting extraDelay = add(new BoolSetting("extraDelay", false));
@@ -104,7 +104,7 @@ public final class Triggerbot extends Module {
             return !client.options.keyJump.isDown() && player.getDeltaMovement().y <= 0.0;
         }
         if (!Players.canCrit(player)) {
-            if (player.fallDistance <= 0.0 && peaking(player) && charged(player, NEXT_TICK)) dropSprint(player);
+            if (player.fallDistance <= 0.0 && peaking(player) && charged(player, CHARGE_LOOKAHEAD_TICKS)) dropSprint(player);
             return false;
         }
         if (player.isSprinting()) {
@@ -125,8 +125,8 @@ public final class Triggerbot extends Module {
     }
 
     private void rearm() {
-        threshold = Maths.random(cooldown.low() / HUNDREDTHS, cooldown.high() / HUNDREDTHS);
-        reach = Maths.random(blocks.low() / HUNDREDTHS, blocks.high() / HUNDREDTHS);
+        threshold = Maths.random(cooldown.low() / PERCENT, cooldown.high() / PERCENT);
+        reach = Maths.random(blocks.low() / PERCENT, blocks.high() / PERCENT);
         overcharge = 0;
     }
 

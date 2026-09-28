@@ -32,7 +32,6 @@
 		"render.CapeLayerMixin",
 		"render.EntityRendererMixin",
 		"render.GameRendererMixin",
-		"render.GuiRendererMixin",
 		"render.EntityRenderStateMixin",
 		"render.ItemInHandRendererMixin",
 		"render.LevelRendererMixin",

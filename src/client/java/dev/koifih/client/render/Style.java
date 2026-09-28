@@ -17,10 +17,6 @@ public record Style(int fill, int stroke, float strokeWidth, int outline, float 
         return new Style(argb, stroke, strokeWidth, outline, outlineWidth, edges);
     }
 
-    public Style withStroke(int argb, float width) {
-        return new Style(fill, argb, width, outline, outlineWidth, edges);
-    }
-
     public Style withOutline(int argb, float width) {
         return new Style(fill, stroke, strokeWidth, argb, width, edges);
     }

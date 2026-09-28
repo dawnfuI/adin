@@ -55,7 +55,6 @@ public final class EventBus {
         if (handlers == null) handlers = resolve(event.getClass());
         for (Handler<?> handler : handlers) {
             if (handler.cancelled) continue;
-            if (event instanceof CancellableEvent cancellable && cancellable.isCancelled()) break;
             try {
                 handler.accept(event);
             } catch (RuntimeException exception) {

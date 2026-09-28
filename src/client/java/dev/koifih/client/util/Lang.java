@@ -77,9 +77,7 @@ public final class Lang {
     }
 
     public static String get(String key) {
-        String value = translations(current).get(key);
-        if (value == null) value = translations(Language.ENGLISH).get(key);
-        return value == null ? key : value;
+        return getOrDefault(key, key);
     }
 
     private static Map<String, String> translations(Language language) {

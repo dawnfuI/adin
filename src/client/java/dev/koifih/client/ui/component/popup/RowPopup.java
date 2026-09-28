@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 
 abstract class RowPopup extends Popup {
     private static final int CHEVRON_ICON = 0xe5cf;
+    private static final int CHECK_ICON = 0xe5ca;
 
     private AdinIcon icon;
 
@@ -30,7 +31,16 @@ abstract class RowPopup extends Popup {
 
     protected abstract void drawRowValue(GuiGraphicsExtractor graphics, float rightLimit, float available);
 
-    protected abstract void drawContents(GuiGraphicsExtractor graphics, float x, float top, float width, float height);
+    protected void drawContents(GuiGraphicsExtractor graphics, float x, float top, float width, float height) {
+    }
+
+    protected static void drawCheck(GuiGraphicsExtractor graphics, float left, float center, float iconSize, float checked) {
+        if (checked > 0f) {
+            float size = iconSize * (0.6f + 0.4f * checked);
+            Opacity.with(checked, () -> Draw.icon(graphics, CHECK_ICON, left + (iconSize - size) / 2,
+                    center - size / 2, size, Theme.ACCENT));
+        }
+    }
 
     protected boolean opensBelow() {
         return getBottom() + popupHeight() <= bottomLimit();

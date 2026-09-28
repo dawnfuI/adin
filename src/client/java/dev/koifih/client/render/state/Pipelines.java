@@ -36,8 +36,6 @@ public final class Pipelines {
 
     public static final RenderPipeline TEXT = builder("text", "core/text", "core/text")
             .withShaderDefine("MSDF_RANGE", Fonts.DISTANCE_RANGE)
-            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
             .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
             .withVertexBinding(0, DefaultVertexFormat.POSITION_TEX_COLOR)
             .build();
@@ -52,15 +50,11 @@ public final class Pipelines {
             .build();
 
     public static final RenderPipeline STAIRS = builder("stairs", "core/stairs", "core/stairs")
-            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
             .withVertexBinding(0, STAIRS_FORMAT)
             .build();
 
     public static final RenderPipeline ICON = builder("icon", "core/icon", "core/icon")
             .withShaderDefine("MSDF_RANGE", Fonts.DISTANCE_RANGE)
-            .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-            .withBindGroupLayout(BindGroupLayouts.PROJECTION)
             .withBindGroupLayout(BindGroupLayouts.SAMPLER0)
             .withVertexBinding(0, SHAPE_FORMAT)
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
@@ -79,8 +73,6 @@ public final class Pipelines {
 
     private static RenderPipeline.Builder shape(String name, String vertexShader, String fragmentShader) {
         return builder(name, vertexShader, fragmentShader)
-                .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
-                .withBindGroupLayout(BindGroupLayouts.PROJECTION)
                 .withVertexBinding(0, SHAPE_FORMAT);
     }
 
@@ -89,6 +81,8 @@ public final class Pipelines {
                 .withLocation(Adin.id("pipeline/" + name))
                 .withVertexShader(Adin.id(vertexShader))
                 .withFragmentShader(Adin.id(fragmentShader))
+                .withBindGroupLayout(BindGroupLayouts.DYNAMIC_TRANSFORMS)
+                .withBindGroupLayout(BindGroupLayouts.PROJECTION)
                 .withPrimitiveTopology(PrimitiveTopology.QUADS)
                 .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                 .withDepthStencilState(Optional.empty())

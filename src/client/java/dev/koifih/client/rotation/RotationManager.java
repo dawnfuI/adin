@@ -18,6 +18,10 @@ import net.minecraft.world.phys.Vec3;
 
 public final class RotationManager {
     private static final float TURN_FACTOR = 0.15f;
+    private static final double SENSITIVITY_SCALE = 0.6;
+    private static final double SENSITIVITY_BASE = 0.2;
+    private static final float MOUSE_STEP = 8f;
+    private static final float MIN_INPUT_SQR = 1.0E-8f;
 
     private record Request(RotationTarget target, int priority, RotationConfig config) {}
 
@@ -53,10 +57,6 @@ public final class RotationManager {
         }
         Rotation actual = Rotation.of(player);
         player.turn(actual.yawTo(target) / TURN_FACTOR, actual.pitchTo(target) / TURN_FACTOR);
-    }
-
-    public boolean active() {
-        return current != null;
     }
 
     public Rotation rotation(LocalPlayer player) {
@@ -107,7 +107,7 @@ public final class RotationManager {
     }
 
     public Vec2 correctInput(Vec2 input, float actualYaw) {
-        if (current == null || !moveFix().correctsInput() || input.lengthSquared() < 1.0E-8f) return input;
+        if (current == null || !moveFix().correctsInput() || input.lengthSquared() < MIN_INPUT_SQR) return input;
         double theta = Math.toRadians(actualYaw - current.yaw());
         float sin = (float) Math.sin(theta);
         float cos = (float) Math.cos(theta);
@@ -172,6 +172,12 @@ public final class RotationManager {
         } else {
             rotator = null;
         }
+        if (visible == null && config != null) unblock(actual);
+    }
+
+    private void unblock(Rotation actual) {
+        Rotation outgoing = current != null ? current : actual;
+        if (outgoing.equals(lastSent) && Placement.blocked()) current = outgoing.moved(gcd(), 0f);
     }
 
     private void onTurn(TurnEvent event) {
@@ -201,7 +207,7 @@ public final class RotationManager {
     }
 
     private static float gcd() {
-        float factor = (float) (Minecraft.getInstance().options.sensitivity().get() * 0.6 + 0.2);
-        return factor * factor * factor * 8f * TURN_FACTOR;
+        float factor = (float) (Minecraft.getInstance().options.sensitivity().get() * SENSITIVITY_SCALE + SENSITIVITY_BASE);
+        return factor * factor * factor * MOUSE_STEP * TURN_FACTOR;
     }
 }

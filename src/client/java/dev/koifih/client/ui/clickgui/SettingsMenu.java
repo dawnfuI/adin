@@ -26,6 +26,9 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntConsumer;
+import java.util.function.IntSupplier;
 
 @RequiredArgsConstructor
 public final class SettingsMenu {
@@ -52,11 +55,6 @@ public final class SettingsMenu {
     private final List<Control> controls = new ArrayList<>();
     private PanelLayout layout;
     private boolean open;
-    private Dropdown language;
-    private Dropdown size;
-    private Dropdown units;
-    private Dropdown tooltips;
-    private AccentPicker accent;
     private Keybind bind;
 
     public void init(PanelLayout layout) {
@@ -79,54 +77,31 @@ public final class SettingsMenu {
                         Segmented.Segment.of(AdinIcon.DARK, Lang.get("theme.dark"))},
                 () -> Theme.mode() == Theme.Mode.LIGHT ? 0 : 1, index -> Theme.setMode(MODES[index])));
 
-        String[] languages = new String[Lang.Language.ALL.length];
-        for (int i = 0; i < languages.length; i++) languages[i] = Lang.Language.ALL[i].displayName();
-        int dropdownHeight = layout.atLeastOne(18);
-        language = gui.add(Dropdown.single(x() + inner, rowY(1) + (rowHeight - dropdownHeight) / 2,
-                width() - 2 * inner, dropdownHeight, scale, Component.literal(Lang.get("language")), languages,
+        Dropdown language = choice(1, "language", AdinIcon.LANGUAGE, names(Lang.Language.ALL, Lang.Language::displayName),
                 () -> Lang.current().ordinal(), index -> {
                     Lang.set(Lang.Language.ALL[index]);
                     gui.requestRebuild();
-                }));
-        language.setIcon(AdinIcon.LANGUAGE);
-        language.setBottomLimit(layout.bottom());
-
-        String[] sizes = new String[UiScale.ALL.length];
-        for (int i = 0; i < sizes.length; i++) sizes[i] = UiScale.ALL[i].displayName();
-        size = gui.add(Dropdown.single(x() + inner, rowY(2) + (rowHeight - dropdownHeight) / 2,
-                width() - 2 * inner, dropdownHeight, scale, Component.literal(Lang.get("size")), sizes,
-                () -> UiScale.current().ordinal(), index -> UiScale.set(UiScale.ALL[index])));
-        size.setIcon(AdinIcon.SIZE);
-        size.setBottomLimit(layout.bottom());
-
-        String[] unitNames = new String[Units.ALL.length];
-        for (int i = 0; i < unitNames.length; i++) unitNames[i] = Units.ALL[i].displayName();
-        units = gui.add(Dropdown.single(x() + inner, rowY(3) + (rowHeight - dropdownHeight) / 2,
-                width() - 2 * inner, dropdownHeight, scale, Component.literal(Lang.get("units")), unitNames,
-                () -> Units.current().ordinal(), index -> Units.set(Units.ALL[index])));
-        units.setIcon(AdinIcon.UNITS);
-        units.setBottomLimit(layout.bottom());
+                });
+        Dropdown size = choice(2, "size", AdinIcon.SIZE, names(UiScale.ALL, UiScale::displayName),
+                () -> UiScale.current().ordinal(), index -> UiScale.set(UiScale.ALL[index]));
+        Dropdown units = choice(3, "units", AdinIcon.UNITS, names(Units.ALL, Units::displayName),
+                () -> Units.current().ordinal(), index -> Units.set(Units.ALL[index]));
 
         int accentHeight = layout.atLeastOne(14);
-        AccentPicker picker = new AccentPicker(0, rowY(5) + (rowHeight - accentHeight) / 2, accentHeight, scale,
+        AccentPicker accent = new AccentPicker(0, rowY(5) + (rowHeight - accentHeight) / 2, accentHeight, scale,
                 Theme::accentRgb, Theme::setAccent);
-        picker.setX(right() - inner - picker.getWidth());
-        accent = gui.add(picker);
+        accent.setX(right() - inner - accent.getWidth());
+        gui.add(accent);
         accent.setBottomLimit(layout.bottom());
 
-        int bindWidth = layout.atLeastOne(BIND_WIDTH);
-        int bindHeight = layout.atLeastOne(BIND_HEIGHT);
-        String[] tooltipModes = new String[Tooltips.ALL.length];
-        for (int i = 0; i < tooltipModes.length; i++) tooltipModes[i] = Tooltips.ALL[i].displayName();
-        tooltips = gui.add(Dropdown.single(x() + inner, rowY(4) + (rowHeight - dropdownHeight) / 2,
-                width() - 2 * inner, dropdownHeight, scale, Component.literal(Lang.get("tooltips")), tooltipModes,
+        Dropdown tooltips = choice(4, "tooltips", AdinIcon.TOOLTIPS, names(Tooltips.ALL, Tooltips::displayName),
                 () -> Tooltips.current().ordinal(), index -> {
                     Tooltips.set(Tooltips.ALL[index]);
                     gui.requestRebuild();
-                }));
-        tooltips.setIcon(AdinIcon.TOOLTIPS);
-        tooltips.setBottomLimit(layout.bottom());
+                });
 
+        int bindWidth = layout.atLeastOne(BIND_WIDTH);
+        int bindHeight = layout.atLeastOne(BIND_HEIGHT);
         bind = gui.add(new Keybind(right() - inner - bindWidth, rowY(6) + (rowHeight - bindHeight) / 2,
                 bindWidth, bindHeight, scale, Component.literal(Lang.get("clickgui_bind")),
                 Keybinds::clickGuiKey, Keybinds::setClickGuiKey));
@@ -139,6 +114,22 @@ public final class SettingsMenu {
                 () -> Clicks.simulate, value -> Clicks.simulate = value));
 
         controls.addAll(List.of(close, theme, language, size, units, tooltips, accent, bind, clicks));
+    }
+
+    private Dropdown choice(int row, String key, AdinIcon icon, String[] names, IntSupplier get, IntConsumer set) {
+        int inner = layout.scaled(PADDING);
+        int height = layout.atLeastOne(18);
+        Dropdown dropdown = gui.add(Dropdown.single(x() + inner, rowY(row) + (layout.atLeastOne(ROW_STRIDE) - height) / 2,
+                width() - 2 * inner, height, layout.scale(), Component.literal(Lang.get(key)), names, get, set));
+        dropdown.setIcon(icon);
+        dropdown.setBottomLimit(layout.bottom());
+        return dropdown;
+    }
+
+    private static <T> String[] names(T[] values, Function<T, String> name) {
+        String[] names = new String[values.length];
+        for (int i = 0; i < names.length; i++) names[i] = name.apply(values[i]);
+        return names;
     }
 
     public void relayout(PanelLayout layout) {
@@ -239,10 +230,6 @@ public final class SettingsMenu {
         Text.drawCentered(graphics, Lang.get("clickgui_bind"), textX, rowY(6) + layout.atLeastOne(ROW_STRIDE) * 0.5f, 7 * scale, Theme.TEXT);
         Text.drawCentered(graphics, Lang.get("click_simulation"), textX, rowY(7) + layout.atLeastOne(ROW_STRIDE) * 0.5f, 7 * scale, Theme.TEXT);
         for (Control control : controls) control.extractRenderState(graphics, mouseX, mouseY, delta);
-        language.renderPopup(graphics, mouseX, mouseY);
-        size.renderPopup(graphics, mouseX, mouseY);
-        units.renderPopup(graphics, mouseX, mouseY);
-        tooltips.renderPopup(graphics, mouseX, mouseY);
-        accent.renderPopup(graphics, mouseX, mouseY);
+        for (Control control : controls) if (control instanceof Popup popup) popup.renderPopup(graphics, mouseX, mouseY);
     }
 }

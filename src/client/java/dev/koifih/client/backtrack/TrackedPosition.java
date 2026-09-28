@@ -11,7 +11,7 @@ import net.minecraft.world.entity.PositionMoveRotation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-public final class  TrackedPosition {
+public final class TrackedPosition {
     private final VecDeltaCodec codec = new VecDeltaCodec();
 
     public Vec3 get() {

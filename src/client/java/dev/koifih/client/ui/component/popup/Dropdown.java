@@ -2,7 +2,6 @@ package dev.koifih.client.ui.component.popup;
 
 import dev.koifih.client.render.AdinIcon;
 import dev.koifih.client.render.Draw;
-import dev.koifih.client.render.Opacity;
 import dev.koifih.client.render.Text;
 import dev.koifih.client.render.Transform;
 import dev.koifih.client.ui.Theme;
@@ -24,7 +23,6 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class Dropdown extends RowPopup {
-    private static final int CHECK_ICON = 0xe5ca;
     private static final float OPTION_HEIGHT = 15f;
     private static final float ART_OPTION_HEIGHT = 19f;
     private static final float IMAGE_ASPECT = 12f;
@@ -193,11 +191,7 @@ public final class Dropdown extends RowPopup {
                 drawArt(graphics, option, x, center, width, checked);
                 return;
             }
-            if (checked > 0f) {
-                float size = iconSize * (0.6f + 0.4f * checked);
-                Opacity.with(checked, () -> Draw.icon(graphics, CHECK_ICON, x + px(9) + (iconSize - size) / 2,
-                        center - size / 2, size, Theme.ACCENT));
-            }
+            drawCheck(graphics, x + px(9), center, iconSize, checked);
             text(graphics, fit(options[option], width - px(30), px(7)), x + px(22), center, px(7), Colors.lerp(Theme.DIM, Theme.TEXT, checked));
         });
     }

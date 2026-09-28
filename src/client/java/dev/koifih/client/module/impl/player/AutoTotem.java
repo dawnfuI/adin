@@ -25,9 +25,9 @@ public final class AutoTotem extends Module {
     private static final int HOVER = 1;
     private static final String[] TIMINGS = {"Normal", "Totem Guard"};
     private static final int TOTEM_GUARD = 1;
-    private static final long TIMEOUT = 2000;
-    private static final int MIN_SLOW = 2;
-    private static final int MAX_SLOW = 3;
+    private static final long STEP_TIMEOUT_MILLIS = 2000;
+    private static final int MIN_SLOW_TICKS = 2;
+    private static final int MAX_SLOW_TICKS = 3;
 
     private final EnumSetting mode = add(new EnumSetting("mode", 0, MODES));
     private final BoolSetting openInventory = add(new BoolSetting("openInventory", true));
@@ -86,12 +86,12 @@ public final class AutoTotem extends Module {
 
     private void open(LocalPlayer player) {
         if (player.getItemInHand(popped).is(Items.TOTEM_OF_UNDYING)) {
-            if (sinceStep.elapsed(TIMEOUT)) step = Step.IDLE;
+            if (sinceStep.elapsed(STEP_TIMEOUT_MILLIS)) step = Step.IDLE;
         } else if (handSource(player) == null && hotbarSource(player) == null) {
             step = Step.IDLE;
         } else if (manual()) {
             if (mc.gui.screen() instanceof InventoryScreen) advance(Step.OPENED);
-        } else if (sinceStep.elapsed(TIMEOUT)) {
+        } else if (sinceStep.elapsed(STEP_TIMEOUT_MILLIS)) {
             step = Step.IDLE;
         } else if (mc.gui.screen() == null) {
             mc.gui.setScreen(new InventoryScreen(player));
@@ -140,12 +140,13 @@ public final class AutoTotem extends Module {
     private void advance(Step next) {
         step = next;
         sinceStep.mark();
-        boolean guarded = next == Step.OPENED && timing.get() == TOTEM_GUARD;
-        wait = guarded ? reaction() : delay.get();
+        boolean opened = next == Step.OPENED;
+        long base = opened && timing.get() == TOTEM_GUARD ? reaction() : delay.get();
+        wait = opened ? Math.max(base, Time.TICK_MILLIS) : base;
     }
 
     private long reaction() {
-        int ticks = slow ? (int) Maths.random(MIN_SLOW, MAX_SLOW + 1) : 0;
+        int ticks = slow ? (int) Maths.random(MIN_SLOW_TICKS, MAX_SLOW_TICKS + 1) : 0;
         return delay.get() + ticks * Time.TICK_MILLIS;
     }
 

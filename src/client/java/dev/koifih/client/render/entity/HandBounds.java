@@ -19,6 +19,7 @@ public final class HandBounds {
     private static final int BLUR_SLACK = 2;
 
     private static final Matrix4f clip = new Matrix4f();
+    private static final Matrix4f local = new Matrix4f();
     private static final Vector4f point = new Vector4f();
     private static float minX;
     private static float minY;
@@ -41,7 +42,7 @@ public final class HandBounds {
     }
 
     public static void include(List<BakedQuad> quads, PoseStack pose) {
-        Matrix4f local = new Matrix4f(clip).mul(pose.last().pose());
+        local.set(clip).mul(pose.last().pose());
         for (BakedQuad quad : quads) {
             for (int i = 0; i < BakedQuad.VERTEX_COUNT; i++) {
                 var position = quad.position(i);

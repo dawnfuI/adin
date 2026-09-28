@@ -77,10 +77,6 @@ public final class Transition {
         startedAt = System.nanoTime();
     }
 
-    public boolean done() {
-        return System.nanoTime() - startedAt >= delayNanos + durationNanos;
-    }
-
     public float flight() {
         float span = Math.abs(target - from);
         return span <= 0f ? 0f : Math.clamp(Math.abs(target - value()) / span, 0f, 1f);

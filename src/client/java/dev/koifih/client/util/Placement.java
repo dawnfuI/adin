@@ -26,9 +26,9 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Placement {
-    private static final float DUPLICATE_ROTATION = 2f;
-    private static final float DUPLICATE_TOLERANCE = 0.0001f;
-    private static final double DIAGONAL = 0.4;
+    private static final float DUPLICATE_MIN_DELTA = 2f;
+    private static final float DUPLICATE_EPSILON = 0.0001f;
+    private static final double DIAGONAL_RATIO = 0.4;
 
     private static boolean placed;
     private static boolean rotated;
@@ -36,11 +36,15 @@ public final class Placement {
     private static float lastPlacedDelta = -1f;
 
     public static boolean ready() {
-        return !placed && !(rotated && duplicates(lastRotationDelta));
+        return !placed && !blocked();
+    }
+
+    public static boolean blocked() {
+        return rotated && duplicates(lastRotationDelta);
     }
 
     public static boolean duplicates(float yawDelta) {
-        return yawDelta > DUPLICATE_ROTATION && Math.abs(yawDelta - lastPlacedDelta) < DUPLICATE_TOLERANCE;
+        return yawDelta > DUPLICATE_MIN_DELTA && Math.abs(yawDelta - lastPlacedDelta) < DUPLICATE_EPSILON;
     }
 
     public static void rotated(float yawDelta) {
@@ -66,7 +70,7 @@ public final class Placement {
         Vec3 offset = eye.subtract(Vec3.atCenterOf(pos));
         double x = Math.abs(offset.x);
         double z = Math.abs(offset.z);
-        boolean diagonal = Math.min(x, z) > DIAGONAL * Math.max(x, z);
+        boolean diagonal = Math.min(x, z) > DIAGONAL_RATIO * Math.max(x, z);
         int stepX = diagonal || x >= z ? (int) Math.signum(offset.x) : 0;
         int stepZ = diagonal || z > x ? (int) Math.signum(offset.z) : 0;
         return new Vec3i(stepX, 0, stepZ);

@@ -158,10 +158,6 @@ public final class PreviewWindow {
         gui.dropFocus();
     }
 
-    public boolean isOpen() {
-        return open;
-    }
-
     public void updateStates(boolean interactive) {
         boolean ready = open && interactive && reveal.value() >= 1f;
         back.active = ready;

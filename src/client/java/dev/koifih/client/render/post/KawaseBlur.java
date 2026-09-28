@@ -47,7 +47,6 @@ public final class KawaseBlur {
     private RenderTarget down;
     private RenderTarget first;
     private RenderTarget second;
-    private float uploadedRadius = Float.NaN;
     private int passes;
 
     public KawaseBlur(String name) {
@@ -56,11 +55,6 @@ public final class KawaseBlur {
 
     public static int passes(float radius) {
         return Math.clamp((int) Math.ceil(Math.sqrt(radius)), 1, MAX_PASSES);
-    }
-
-    public static int reach(float radius) {
-        int count = passes(radius);
-        return 2 * (count * (count + 1) / 2 + 2) + 2;
     }
 
     public GpuTextureView blur(CommandEncoder encoder, GpuTextureView source, int width, int height, float radius,
@@ -99,21 +93,18 @@ public final class KawaseBlur {
     }
 
     private void upload(CommandEncoder encoder, float radius) {
-        if (radius == uploadedRadius) return;
         passes = passes(radius);
         for (int i = 0; i <= passes; i++) {
-            if (offsets[i] == null) {
-                int index = i;
-                offsets[i] = RenderSystem.getDevice().createBuffer(() -> "adin kawase " + name + " " + index,
-                        GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, CONFIG_SIZE);
-            }
+            if (offsets[i] != null) continue;
+            int index = i;
+            offsets[i] = RenderSystem.getDevice().createBuffer(() -> "adin kawase " + name + " " + index,
+                    GpuBuffer.USAGE_UNIFORM | GpuBuffer.USAGE_COPY_DST, CONFIG_SIZE);
             float offset = i == 0 ? 1f : i - 0.5f;
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 encoder.writeToBuffer(offsets[i].slice(), Std140Builder.onStack(stack, CONFIG_SIZE)
                         .putVec2(offset, offset).putVec2(0f, 0f).get());
             }
         }
-        uploadedRadius = radius;
     }
 
     private RenderTarget target(RenderTarget current, String label, int width, int height) {

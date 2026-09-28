@@ -12,9 +12,7 @@ public final class Sprint extends Module {
 
     @Override
     protected void onEnable() {
-        if (mc.options.toggleSprint().get()) {
-            wasSprinting = true;
-        }
+        wasSprinting = mc.options.toggleSprint().get();
         listen(TickEvent.class, this::onTick);
     }
 
@@ -26,7 +24,7 @@ public final class Sprint extends Module {
     }
 
     private void onTick(TickEvent event) {
-        if (mc.options.toggleSprint().get().booleanValue()) {
+        if (mc.options.toggleSprint().get()) {
             mc.options.toggleSprint().set(false);
         }
         mc.options.keySprint.setDown(true);

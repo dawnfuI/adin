@@ -33,9 +33,7 @@ public final class Clicks {
     }
 
     public static boolean right(Minecraft client, BlockHitResult target) {
-        return client.hitResult instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK
-                && hit.getBlockPos().equals(target.getBlockPos()) && hit.getDirection() == target.getDirection()
-                && press(client, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+        return client.hitResult instanceof BlockHitResult hit && hit.getDirection() == target.getDirection() && right(client, target.getBlockPos());
     }
 
     public static boolean right(Minecraft client, BlockPos target) {

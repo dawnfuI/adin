@@ -60,12 +60,10 @@ public final class Hotbar {
 
     public static boolean resync(LocalPlayer player) {
         int slot = selected(player);
-        if (serverSlot() == slot) {
-            silentSlot = NONE;
-            return true;
+        if (serverSlot() != slot) {
+            if (acted) return false;
+            send(player, slot);
         }
-        if (acted) return false;
-        send(player, slot);
         silentSlot = NONE;
         return true;
     }

@@ -15,8 +15,6 @@ public final class VideoPlayer implements AutoCloseable {
     private final Identifier texture;
     private final long started = System.nanoTime();
     private DynamicTexture surface;
-    private int width;
-    private int height;
     private int shown = -1;
 
     VideoPlayer(String id, AviVideo video) {
@@ -35,8 +33,8 @@ public final class VideoPlayer implements AutoCloseable {
     private void present(int frame) {
         try (NativeImage image = video.decode(frame)) {
             if (surface == null) {
-                width = image.getWidth();
-                height = image.getHeight();
+                int width = image.getWidth();
+                int height = image.getHeight();
                 surface = new DynamicTexture(() -> "adin video " + texture.getPath(), width, height, false);
                 Minecraft.getInstance().getTextureManager().register(texture, surface);
             }

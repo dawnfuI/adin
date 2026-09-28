@@ -23,8 +23,6 @@ public final class Theme {
         TRACK(0xFF343434, 0xFFCACACA),
         POPUP(0xFF202020, 0xFFFFFFFF),
         POPUP_BORDER(0x00000000, 0xFFC8C8C8),
-        HIGHLIGHT(0xFF2B322B, 0xFFE3EAE1),
-        UNCHECKED(0xFF444444, 0xFFB0B0B0),
         TOGGLE_OFF(0xFF171717, 0xFFD0D0D0),
         TOGGLE_OFF_BORDER(0xFF2B2B2B, 0xFFB4B4B4),
         THUMB_OFF(0xFF484848, 0xFF7A7A7A);
@@ -59,8 +57,6 @@ public final class Theme {
     public static int TRACK;
     public static int POPUP;
     public static int POPUP_BORDER;
-    public static int HIGHLIGHT;
-    public static int UNCHECKED;
     public static int TOGGLE_OFF;
     public static int TOGGLE_OFF_BORDER;
     public static int THUMB_OFF;
@@ -131,8 +127,6 @@ public final class Theme {
         TRACK = blended(Palette.TRACK, t);
         POPUP = blended(Palette.POPUP, t);
         POPUP_BORDER = blended(Palette.POPUP_BORDER, t);
-        HIGHLIGHT = blended(Palette.HIGHLIGHT, t);
-        UNCHECKED = blended(Palette.UNCHECKED, t);
         TOGGLE_OFF = blended(Palette.TOGGLE_OFF, t);
         TOGGLE_OFF_BORDER = blended(Palette.TOGGLE_OFF_BORDER, t);
         THUMB_OFF = blended(Palette.THUMB_OFF, t);

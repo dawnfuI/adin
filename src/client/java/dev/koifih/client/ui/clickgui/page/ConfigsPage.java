@@ -18,7 +18,6 @@ import dev.koifih.client.ui.component.TextInput;
 import dev.koifih.client.util.Lang;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -28,24 +27,6 @@ import java.util.List;
 
 @RequiredArgsConstructor
 public final class ConfigsPage implements Page {
-    private record Area(float scale, int x, int y, int width, int height, int padding) {
-        int scaled(float units) {
-            return Math.round(units * scale);
-        }
-
-        int atLeastOne(float units) {
-            return Math.max(1, scaled(units));
-        }
-
-        int rowX() {
-            return x + padding;
-        }
-
-        int rowWidth() {
-            return width - 2 * padding;
-        }
-    }
-
     private static final int CARD_HEIGHT = 40;
     private static final int CARD_STRIDE = 46;
     private static final int GAP = 6;
@@ -63,7 +44,7 @@ public final class ConfigsPage implements Page {
     private final List<Control> cardControls = new ArrayList<>();
     private final List<Control> createControls = new ArrayList<>();
     private List<Config> configs = new ArrayList<>();
-    private Area area;
+    private PanelLayout layout;
     private boolean shown;
     private boolean interactive;
     private Button makeButton;
@@ -77,14 +58,9 @@ public final class ConfigsPage implements Page {
     private int scope = Config.Scope.BOTH.ordinal();
     private boolean dialogOpen;
 
-    private <T extends AbstractWidget> T add(T widget) {
-        return gui.add(widget);
-    }
-
     @Override
     public void relayout(PanelLayout layout) {
-        this.area = new Area(layout.scale(), layout.contentX(), layout.contentY(),
-                layout.contentWidth(), layout.contentHeight(), layout.padding());
+        this.layout = layout;
     }
 
     @Override
@@ -97,54 +73,54 @@ public final class ConfigsPage implements Page {
         listReveal.set(1f);
         cardControls.clear();
         createControls.clear();
-        float scale = area.scale();
-        int buttonHeight = Math.max(1, area.scaled(18));
+        float scale = layout.scale();
+        int buttonHeight = layout.atLeastOne(18);
 
         String makeLabel = Lang.get("configs.make");
         int makeWidth = Button.preferredWidth(makeLabel, scale);
-        makeButton = add(new Button(area.x() + (area.width() - makeWidth) / 2, area.y() + area.height() / 2 + area.scaled(8),
+        makeButton = gui.add(new Button(layout.contentX() + (layout.contentWidth() - makeWidth) / 2, layout.contentY() + layout.contentHeight() / 2 + layout.scaled(8),
                 makeWidth, buttonHeight, scale, Component.literal(makeLabel), this::openCreate));
 
         String loadLabel = Lang.get("configs.load");
         int loadWidth = Button.preferredWidth(loadLabel, scale);
-        int deleteSize = Math.max(1, area.scaled(16));
-        int cardHeight = Math.max(1, area.scaled(CARD_HEIGHT));
+        int deleteSize = layout.atLeastOne(16);
+        int cardHeight = layout.atLeastOne(CARD_HEIGHT);
         for (int i = 0; i < visibleCount(); i++) {
             Config config = configs.get(i);
             int cardY = cardY(i);
-            int deleteX = area.rowX() + area.rowWidth() - area.padding() - deleteSize;
-            int loadX = deleteX - area.scaled(GAP) - loadWidth;
-            cardControls.add(add(new Button(loadX, cardY + (cardHeight - buttonHeight) / 2, loadWidth, buttonHeight, scale,
+            int deleteX = layout.rowX() + layout.rowWidth() - layout.padding() - deleteSize;
+            int loadX = deleteX - layout.scaled(GAP) - loadWidth;
+            cardControls.add(gui.add(new Button(loadX, cardY + (cardHeight - buttonHeight) / 2, loadWidth, buttonHeight, scale,
                     Component.literal(loadLabel), () -> load(config))));
-            cardControls.add(add(Button.icon(deleteX, cardY + (cardHeight - deleteSize) / 2, deleteSize, scale, DELETE_ICON,
+            cardControls.add(gui.add(Button.icon(deleteX, cardY + (cardHeight - deleteSize) / 2, deleteSize, scale, DELETE_ICON,
                     Component.literal(Lang.get("configs.delete")), () -> delete(config))));
         }
-        addButton = add(Button.tile(area.rowX(), cardY(visibleCount()), area.rowWidth(), Math.max(1, area.scaled(ADD_HEIGHT)), scale,
+        addButton = gui.add(Button.tile(layout.rowX(), cardY(visibleCount()), layout.rowWidth(), layout.atLeastOne(ADD_HEIGHT), scale,
                 Component.literal(makeLabel), ADD_ICON, this::openCreate));
 
-        int rowHeight = Math.max(1, area.scaled(DIALOG_ROW));
-        int inputHeight = Math.max(1, area.scaled(16));
+        int rowHeight = layout.atLeastOne(DIALOG_ROW);
+        int inputHeight = layout.atLeastOne(16);
         int dialogX = createDialogX();
         int dialogWidth = createDialogWidth();
         int dialogY = createDialogY();
         int controlX = dialogX + dialogWidth / 2;
-        int controlWidth = dialogX + dialogWidth - area.scaled(DIALOG_PADDING) - controlX;
-        nameInput = add(new TextInput(controlX, dialogRowY(dialogY, 0) + (rowHeight - inputHeight) / 2, controlWidth, inputHeight, scale,
+        int controlWidth = dialogX + dialogWidth - layout.scaled(DIALOG_PADDING) - controlX;
+        nameInput = gui.add(new TextInput(controlX, dialogRowY(dialogY, 0) + (rowHeight - inputHeight) / 2, controlWidth, inputHeight, scale,
                 Component.literal(Lang.get("configs.name")), 24, () -> name, value -> name = value));
         nameInput.setPlaceholder(Lang.get("configs.name"));
-        descriptionInput = add(new TextInput(controlX, dialogRowY(dialogY, 1) + (rowHeight - inputHeight) / 2, controlWidth, inputHeight, scale,
+        descriptionInput = gui.add(new TextInput(controlX, dialogRowY(dialogY, 1) + (rowHeight - inputHeight) / 2, controlWidth, inputHeight, scale,
                 Component.literal(Lang.get("configs.description")), 48, () -> description, value -> description = value));
         descriptionInput.setPlaceholder(Lang.get("configs.description"));
         Segmented.Segment[] scopes = {Segmented.Segment.of(Lang.get("configs.scope.colors")), Segmented.Segment.of(Lang.get("configs.scope.settings")), Segmented.Segment.of(Lang.get("configs.scope.both"))};
         int labelWidth = (int) Math.ceil(Text.width(Lang.get("configs.include"), 7 * scale));
-        int scopeRight = dialogX + dialogWidth - area.scaled(DIALOG_PADDING);
-        int scopeMax = scopeRight - (dialogX + area.scaled(DIALOG_PADDING) + labelWidth + area.scaled(GAP));
+        int scopeRight = dialogX + dialogWidth - layout.scaled(DIALOG_PADDING);
+        int scopeMax = scopeRight - (dialogX + layout.scaled(DIALOG_PADDING) + labelWidth + layout.scaled(GAP));
         int scopeWidth = Math.min(scopeMax, Segmented.preferredWidth(scopes, scale));
-        scopeInput = add(new Segmented(scopeRight - scopeWidth, dialogRowY(dialogY, 2) + (rowHeight - inputHeight) / 2, scopeWidth, inputHeight, scale,
+        scopeInput = gui.add(new Segmented(scopeRight - scopeWidth, dialogRowY(dialogY, 2) + (rowHeight - inputHeight) / 2, scopeWidth, inputHeight, scale,
                 Component.literal(Lang.get("configs.include")), scopes, () -> scope, value -> scope = value));
         String createLabel = Lang.get("configs.create");
         int createWidth = Button.preferredWidth(createLabel, scale);
-        createButton = add(new Button(dialogX + dialogWidth - area.scaled(DIALOG_PADDING) - createWidth,
+        createButton = gui.add(new Button(dialogX + dialogWidth - layout.scaled(DIALOG_PADDING) - createWidth,
                 dialogRowY(dialogY, 3) + (rowHeight - buttonHeight) / 2, createWidth, buttonHeight, scale,
                 Component.literal(createLabel), this::create));
         createControls.addAll(List.of(nameInput, descriptionInput, scopeInput, createButton));
@@ -153,32 +129,32 @@ public final class ConfigsPage implements Page {
     }
 
     private int visibleCount() {
-        int fit = Math.max(0, (area.height() - 2 * area.padding() - area.scaled(ADD_HEIGHT)) / Math.max(1, area.scaled(CARD_STRIDE)));
+        int fit = Math.max(0, (layout.contentHeight() - 2 * layout.padding() - layout.scaled(ADD_HEIGHT)) / layout.atLeastOne(CARD_STRIDE));
         return Math.min(configs.size(), fit);
     }
 
     private int cardY(int index) {
-        return area.y() + area.padding() + index * area.atLeastOne(CARD_STRIDE);
+        return layout.contentY() + layout.padding() + index * layout.atLeastOne(CARD_STRIDE);
     }
 
     private int createDialogX() {
-        return area.x() + area.scaled(DIALOG_INSET);
+        return layout.contentX() + layout.scaled(DIALOG_INSET);
     }
 
     private int createDialogWidth() {
-        return area.width() - 2 * area.scaled(DIALOG_INSET);
+        return layout.contentWidth() - 2 * layout.scaled(DIALOG_INSET);
     }
 
     private int createDialogHeight() {
-        return 2 * area.scaled(DIALOG_PADDING) + area.scaled(DIALOG_TITLE) + 4 * area.atLeastOne(DIALOG_ROW);
+        return 2 * layout.scaled(DIALOG_PADDING) + layout.scaled(DIALOG_TITLE) + 4 * layout.atLeastOne(DIALOG_ROW);
     }
 
     private int createDialogY() {
-        return area.y() + (area.height() - createDialogHeight()) / 2;
+        return layout.contentY() + (layout.contentHeight() - createDialogHeight()) / 2;
     }
 
     private int dialogRowY(int dialogY, int row) {
-        return dialogY + area.scaled(DIALOG_PADDING) + area.scaled(DIALOG_TITLE) + row * area.atLeastOne(DIALOG_ROW);
+        return dialogY + layout.scaled(DIALOG_PADDING) + layout.scaled(DIALOG_TITLE) + row * layout.atLeastOne(DIALOG_ROW);
     }
 
     private boolean insideDialog(double pointX, double pointY) {
@@ -277,9 +253,9 @@ public final class ConfigsPage implements Page {
     }
 
     private void drawEmpty(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        float scale = area.scale();
-        float centerX = area.x() + area.width() * 0.5f;
-        float centerY = area.y() + area.height() * 0.5f;
+        float scale = layout.scale();
+        float centerX = layout.contentX() + layout.contentWidth() * 0.5f;
+        float centerY = layout.contentY() + layout.contentHeight() * 0.5f;
         String[] lines = {Lang.get("configs.empty.1"), Lang.get("configs.empty.2")};
         for (int i = 0; i < lines.length; i++) {
             float size = 7.5f * scale;
@@ -299,20 +275,20 @@ public final class ConfigsPage implements Page {
 
     private void drawCards(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         float reveal = listReveal.value();
-        Transform.translated(graphics, 0f, 6 * area.scale() * (1f - reveal),
+        Transform.translated(graphics, 0f, 6 * layout.scale() * (1f - reveal),
                 () -> Opacity.with(reveal, () -> drawCardList(graphics, mouseX, mouseY, delta)));
     }
 
     private void drawCardList(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
-        float scale = area.scale();
-        int cardHeight = Math.max(1, area.scaled(CARD_HEIGHT));
-        int radius = Math.max(1, area.scaled(6));
+        float scale = layout.scale();
+        int cardHeight = layout.atLeastOne(CARD_HEIGHT);
+        int radius = layout.atLeastOne(6);
         for (int i = 0; i < visibleCount(); i++) {
             Config config = configs.get(i);
             int y = cardY(i);
-            Draw.rect(graphics, area.rowX(), y, area.rowWidth(), cardHeight, radius, Theme.ROW);
+            Draw.rect(graphics, layout.rowX(), y, layout.rowWidth(), cardHeight, radius, Theme.ROW);
             Control loadButton = cardControls.get(i * 2);
-            float textX = area.rowX() + 10 * scale;
+            float textX = layout.rowX() + 10 * scale;
             float textWidth = loadButton.getX() - GAP * scale - textX;
             String title = Text.fit(config.name, textWidth, 8.5f * scale);
             String author = config.author == null ? "" : config.author;
@@ -333,8 +309,8 @@ public final class ConfigsPage implements Page {
         int width = createDialogWidth();
         int height = createDialogHeight();
         Transform.popIn(graphics, x + width * 0.5f, y + height * 0.5f, reveal, 0.96f, () -> {
-            float scale = area.scale();
-            int radius = Math.max(1, area.scaled(6));
+            float scale = layout.scale();
+            int radius = layout.atLeastOne(6);
             Draw.bordered(graphics, x, y, width, height, radius, Theme.OVERLAY, Theme.POPUP_BORDER);
             float textX = x + DIALOG_PADDING * scale;
             float titleY = y + (DIALOG_PADDING + DIALOG_TITLE * 0.5f) * scale;
@@ -342,7 +318,7 @@ public final class ConfigsPage implements Page {
             String[] labels = {Lang.get("configs.name"), Lang.get("configs.description"), Lang.get("configs.include")};
             for (int row = 0; row < labels.length; row++) {
                 Text.drawCentered(graphics, labels[row], textX,
-                        dialogRowY(y, row) + area.atLeastOne(DIALOG_ROW) * 0.5f, 7 * scale, Theme.TEXT);
+                        dialogRowY(y, row) + layout.atLeastOne(DIALOG_ROW) * 0.5f, 7 * scale, Theme.TEXT);
             }
             for (Control control : createControls) control.extractRenderState(graphics, mouseX, mouseY, delta);
         });

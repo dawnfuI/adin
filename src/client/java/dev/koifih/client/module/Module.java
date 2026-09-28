@@ -124,7 +124,7 @@ public abstract class Module {
     }
 
     void tickKeybind(Minecraft client) {
-        boolean down = key != InputConstants.UNKNOWN && client.gui.screen() == null && isKeyDown(client.getWindow().handle());
+        boolean down = key != InputConstants.UNKNOWN && client.gui.screen() == null && isKeyDown(client.getWindow().handle(), key);
         if (activatable()) {
             if (enabled) {
                 if (down && !keyWasDown) onActivate();
@@ -139,7 +139,7 @@ public abstract class Module {
         keyWasDown = down;
     }
 
-    private boolean isKeyDown(long window) {
+    protected static boolean isKeyDown(long window, InputConstants.Key key) {
         return switch (key.getType()) {
             case KEYSYM -> GLFW.glfwGetKey(window, key.getValue()) == GLFW.GLFW_PRESS;
             case MOUSE -> GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;

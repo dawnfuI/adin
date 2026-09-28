@@ -36,6 +36,9 @@ final class Stats {
     private static final float GAUGE_SWEEP = (float) Math.toRadians(240);
     private static final float GAUGE_FPS = 240f;
     private static final int[] PING_STEPS = {60, 120, 200};
+    private static final float NOD_AMPLITUDE = 0.9f / 24f;
+    private static final float NOD_FREQUENCY = 6f;
+    private static final float NOD_DAMPING = 2.5f;
 
     private final Minecraft mc = Minecraft.getInstance();
     private final Time.Stopwatch shown = new Time.Stopwatch();
@@ -150,7 +153,7 @@ final class Stats {
         float y = centerY - icon * 0.5f;
         float pop = Math.max(0f, Easing.EASE_OUT_BACK.over(elapsed, 0.6f, 0.45f));
         float since = Math.max(0f, elapsed - 1f);
-        float nod = 0.9f / 24f * icon * (float) (Math.sin(since * 6f) * Math.exp(-since * 2.5f));
+        float nod = NOD_AMPLITUDE * icon * (float) (Math.sin(since * NOD_FREQUENCY) * Math.exp(-since * NOD_DAMPING));
         float headX = x + icon * 0.5f;
         float headY = y + icon * HEAD_Y;
         int color = hero.at(headX);

@@ -28,7 +28,6 @@ import java.util.Set;
 import java.util.function.Supplier;
 
 public final class CatalogPicker extends RowPopup {
-    private static final int CHECK_ICON = 0xe5ca;
     private static final int SEARCH_ICON = 0xe8b6;
     private static final float MARGIN = 6f;
     private static final float GROUP_WIDTH = 64f;
@@ -209,10 +208,6 @@ public final class CatalogPicker extends RowPopup {
     }
 
     @Override
-    protected void drawContents(GuiGraphicsExtractor graphics, float x, float top, float width, float height) {
-    }
-
-    @Override
     protected void drawPopup(GuiGraphicsExtractor graphics, float x, float y, float width, float height,
                              float shown, int mouseX, int mouseY) {
         lastMouseX = mouseX;
@@ -313,11 +308,7 @@ public final class CatalogPicker extends RowPopup {
                 check.set(isChosen ? 1f : 0f);
                 float shownCheck = check.value();
                 float rowCenter = rowY + px(ROW_HEIGHT) / 2;
-                if (shownCheck > 0f) {
-                    float checkSize = iconSize * (0.6f + 0.4f * shownCheck);
-                    Opacity.with(shownCheck, () -> Draw.icon(graphics, CHECK_ICON, listX + px(6) + (iconSize - checkSize) / 2,
-                            rowCenter - checkSize / 2, checkSize, Theme.ACCENT));
-                }
+                drawCheck(graphics, listX + px(6), rowCenter, iconSize, shownCheck);
                 text(graphics, fit(entry.name(), listWidth() - px(24), px(6.5f)), listX + px(17), rowCenter, px(6.5f),
                         Colors.lerp(Theme.DIM, Theme.TEXT, shownCheck));
             }

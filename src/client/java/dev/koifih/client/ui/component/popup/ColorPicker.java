@@ -86,10 +86,6 @@ public final class ColorPicker extends RowPopup {
     }
 
     @Override
-    protected void drawContents(GuiGraphicsExtractor graphics, float x, float top, float width, float height) {
-    }
-
-    @Override
     protected void clickPopup(double x, double y) {
         window.click(x, y, popupX(), popupY());
     }

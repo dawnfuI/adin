@@ -47,10 +47,10 @@ public final class XbowCart extends Module {
     private static final int SILENT = 2;
     private static final RotationConfig AUTO_AIM = RotationConfig.visible(0f, Smoothing.EASE_OUT_CUBIC);
     private static final RotationConfig SILENT_AIM = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
-    private static final int MAX_DROP = 2;
-    private static final long TIMEOUT = 2000;
-    private static final long MANUAL_TIMEOUT = 8000;
-    private static final double BOTTOM = 0.5;
+    private static final int MAX_RAIL_DROP = 2;
+    private static final long TIMEOUT_MILLIS = 2000;
+    private static final long MANUAL_TIMEOUT_MILLIS = 8000;
+    private static final double LOWER_FRACTION = 0.5;
     private static final double AIM_LIFT = 0.25;
     private static final double AIM_INSET = 0.1;
     private static final double SHOT_RANGE = 8.0;
@@ -122,7 +122,7 @@ public final class XbowCart extends Module {
             if (slots.swapped() && pacer.ready()) slots.restore(player, swapBack.get());
             return;
         }
-        if (player == null || !Game.playing(mc) || sinceStart.elapsed(manual() ? MANUAL_TIMEOUT : TIMEOUT)) {
+        if (player == null || !Game.playing(mc) || sinceStart.elapsed(manual() ? MANUAL_TIMEOUT_MILLIS : TIMEOUT_MILLIS)) {
             stop(player);
             return;
         }
@@ -163,7 +163,7 @@ public final class XbowCart extends Module {
         BlockPos pos = hit.getBlockPos();
         if (mc.level.getBlockState(pos).is(BlockTags.RAILS)) return pos;
         BlockPos start = hit.getDirection() == Direction.UP ? pos.above() : pos.relative(hit.getDirection());
-        for (int drop = 0; drop <= MAX_DROP; drop++) {
+        for (int drop = 0; drop <= MAX_RAIL_DROP; drop++) {
             BlockPos cell = start.below(drop);
             BlockState state = mc.level.getBlockState(cell);
             if (state.is(BlockTags.RAILS)) return cell;
@@ -256,7 +256,7 @@ public final class XbowCart extends Module {
     private AABB bottom() {
         MinecartTNT tnt = tntCart();
         AABB box = tnt != null ? tnt.getBoundingBox() : EntityTypes.TNT_MINECART.getDimensions().makeBoundingBox(Vec3.atBottomCenterOf(cart));
-        return new AABB(box.minX, box.minY, box.minZ, box.maxX, box.minY + box.getYsize() * BOTTOM, box.maxZ);
+        return new AABB(box.minX, box.minY, box.minZ, box.maxX, box.minY + box.getYsize() * LOWER_FRACTION, box.maxZ);
     }
 
     private Vec3 aimPoint(AABB bottom) {

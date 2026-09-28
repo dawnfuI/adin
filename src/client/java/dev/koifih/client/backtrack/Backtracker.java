@@ -1,6 +1,5 @@
 package dev.koifih.client.backtrack;
 
-import com.mojang.authlib.minecraft.client.MinecraftClient;
 import dev.koifih.Adin;
 import dev.koifih.client.AdinClient;
 import dev.koifih.client.event.Priority;

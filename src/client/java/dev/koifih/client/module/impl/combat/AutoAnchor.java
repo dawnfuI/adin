@@ -31,7 +31,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.function.Predicate;
 
 public final class AutoAnchor extends Module {
-    private static final long PLACE_WAIT = 500;
+    private static final long PLACE_TIMEOUT_MILLIS = 500;
     private static final RotationConfig SNAP = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
 
     private final SliderSetting delay = add(new SliderSetting("delay", 100, 50, 500, Measure.MILLIS));
@@ -101,7 +101,7 @@ public final class AutoAnchor extends Module {
 
     private boolean shield(LocalPlayer player) {
         BlockPos ground = shield.below();
-        if (sincePlace.elapsed(PLACE_WAIT) || !mc.level.getBlockState(shield).canBeReplaced() || mc.level.getBlockState(ground).canBeReplaced()) {
+        if (sincePlace.elapsed(PLACE_TIMEOUT_MILLIS) || !mc.level.getBlockState(shield).canBeReplaced() || mc.level.getBlockState(ground).canBeReplaced()) {
             shield = null;
             return false;
         }
@@ -119,7 +119,7 @@ public final class AutoAnchor extends Module {
     private void work(LocalPlayer player) {
         BlockState state = mc.level.getBlockState(anchor);
         if (!(state.getBlock() instanceof RespawnAnchorBlock)) {
-            if (sincePlace.elapsed(PLACE_WAIT)) idle(player);
+            if (sincePlace.elapsed(PLACE_TIMEOUT_MILLIS)) idle(player);
             return;
         }
         BlockHitResult hit = Placement.clickOn(mc.level, player.getEyePosition(), anchor);

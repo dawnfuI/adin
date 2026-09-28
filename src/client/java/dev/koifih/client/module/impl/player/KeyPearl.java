@@ -75,11 +75,7 @@ public final class KeyPearl extends Module {
         threw = false;
         if (originalSlot == Hotbar.NONE || thrown) return;
         LocalPlayer player = event.client().player;
-        if (player == null || (!silent && !swapBack.get())) {
-            originalSlot = Hotbar.NONE;
-        } else if (sinceSwap.elapsed(delay.get())) {
-            restore(player);
-        }
+        if (player == null || (!silent && !swapBack.get()) || sinceSwap.elapsed(delay.get())) restore(player);
     }
 
     private void restore(LocalPlayer player) {

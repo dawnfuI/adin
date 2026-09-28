@@ -30,8 +30,8 @@ public final class Refill extends Module {
     private static final int POT = 0;
     private static final int BED = 1;
     private static final int CART = 2;
-    private static final double SLOT_MIN = -1;
-    private static final double SLOT_MAX = 17;
+    private static final double SLOT_HOVER_MIN = -1;
+    private static final double SLOT_HOVER_MAX = 17;
 
     private record Crossing(Slot slot, double entry) {}
 
@@ -116,11 +116,11 @@ public final class Refill extends Module {
         for (int axis = 0; axis < 2; axis++) {
             double delta = to[axis] - from[axis];
             if (delta == 0) {
-                if (from[axis] < SLOT_MIN || from[axis] >= SLOT_MAX) return -1;
+                if (from[axis] < SLOT_HOVER_MIN || from[axis] >= SLOT_HOVER_MAX) return -1;
                 continue;
             }
-            double near = (SLOT_MIN - from[axis]) / delta;
-            double far = (SLOT_MAX - from[axis]) / delta;
+            double near = (SLOT_HOVER_MIN - from[axis]) / delta;
+            double far = (SLOT_HOVER_MAX - from[axis]) / delta;
             enter = Math.max(enter, Math.min(near, far));
             exit = Math.min(exit, Math.max(near, far));
             if (enter > exit) return -1;

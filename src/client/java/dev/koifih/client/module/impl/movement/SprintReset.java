@@ -13,7 +13,6 @@ import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Time;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.player.LocalPlayer;
-import org.lwjgl.glfw.GLFW;
 
 public final class SprintReset extends Module {
     private static final String[] MODES = {"W Tap", "S Tap"};
@@ -74,12 +73,6 @@ public final class SprintReset extends Module {
 
     private static void restore(KeyMapping mapping) {
         InputConstants.Key key = ((KeyMappingAccessor) mapping).adin$getKey();
-        long window = mc.getWindow().handle();
-        boolean held = switch (key.getType()) {
-            case KEYSYM -> GLFW.glfwGetKey(window, key.getValue()) == GLFW.GLFW_PRESS;
-            case MOUSE -> GLFW.glfwGetMouseButton(window, key.getValue()) == GLFW.GLFW_PRESS;
-            default -> false;
-        };
-        mapping.setDown(held && mc.gui.screen() == null);
+        mapping.setDown(isKeyDown(mc.getWindow().handle(), key) && mc.gui.screen() == null);
     }
 }

@@ -3,11 +3,8 @@ package dev.koifih.client.render;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.FilterMode;
 import dev.koifih.client.render.font.Font;
 import dev.koifih.client.render.font.Fonts;
-import dev.koifih.client.render.glass.GlassRenderer;
 import dev.koifih.client.render.state.FadedTextureState;
 import dev.koifih.client.render.state.Pipelines;
 import dev.koifih.client.render.state.RectState;
@@ -17,13 +14,8 @@ import dev.koifih.client.render.state.TextState;
 import dev.koifih.client.util.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix3x2f;
-import org.joml.Vector2f;
-import java.util.HashMap;
-import java.util.Map;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class Draw {
@@ -42,9 +34,6 @@ public final class Draw {
     private static final int LOGO_BACK_COLOR = 0xFFA3A3A3;
     private static final int LOGO_FRONT_COLOR = 0xFFEAEAEA;
     private static final int ICON_LAYERS = 3;
-    private static final float GLASS_LIGHT_X = -0.33f;
-    private static final float GLASS_LIGHT_Y = -0.94f;
-    private static final Map<AbstractTexture, TextureSetup> TEXTURES = new HashMap<>();
 
     public static void rect(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int radius, int color) {
         rect(graphics, x, y, width, height, radius, ALL_CORNERS, color, Pipelines.RECT);
@@ -118,10 +107,8 @@ public final class Draw {
                                     float height, float u0, float fade) {
         int color = Opacity.apply(0xFFFFFFFF);
         if (width <= 0 || height <= 0 || Colors.transparent(color)) return;
-        TextureSetup setup = TEXTURES.computeIfAbsent(Minecraft.getInstance().getTextureManager().getTexture(texture), source ->
-                TextureSetup.singleTexture(source.getTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR)));
         Matrix3x2f pose = new Matrix3x2f(graphics.pose()).translate(x, y).scale(width, height);
-        Submit.submit(graphics, new FadedTextureState(pose, setup, u0, fade, color, Scissor.current()));
+        Submit.submit(graphics, new FadedTextureState(pose, TextState.texture(texture), u0, fade, color, Scissor.current()));
     }
 
     public static void logo(GuiGraphicsExtractor graphics, float x, float y, float size, int starColor) {
@@ -152,34 +139,6 @@ public final class Draw {
                                                int back, int hero, int front) {
         int first = icon.ordinal() * ICON_LAYERS + 1;
         return layers(font, first, first + 1, first + 2, back, hero, front, x, y, size);
-    }
-
-    public static void wordmark(GuiGraphicsExtractor graphics, float x, float y, float height,
-                                int back, int star, int front, int backdrop) {
-        Font font = atlas(height, Fonts.WORDMARK_SMALL, Fonts.WORDMARK);
-        TextState.Glyphs glyphs = layers(font, 1, 2, 3, back, star, front, x, y, height);
-        if (!glyphs.isEmpty()) Submit.submit(graphics, TextState.icon(graphics, font.texture(), glyphs, backdrop));
-    }
-
-    public static float wordmarkWidth(float height) {
-        return Fonts.WORDMARK.glyph(1).advance() * height;
-    }
-
-    public static void glass(GuiGraphicsExtractor graphics, float x, float y, float width, float height, float radius,
-                             int variant) {
-        glass(graphics, x, y, width, height, radius, variant, 0, GLASS_LIGHT_X, GLASS_LIGHT_Y, 0f);
-    }
-
-    public static void glass(GuiGraphicsExtractor graphics, float x, float y, float width, float height, float radius,
-                             int variant, int tint, float lightX, float lightY, float energy) {
-        if (width <= 0f || height <= 0f) return;
-        Vector2f start = graphics.pose().transformPosition(x, y, new Vector2f());
-        Vector2f end = graphics.pose().transformPosition(x + width, y + height, new Vector2f());
-        float stretch = Math.abs(end.y - start.y) / height;
-        float opacity = Colors.alpha(Opacity.apply(0xFFFFFFFF)) / 255f;
-        GlassRenderer.submit(new GlassRenderer.Pane(Math.min(start.x, end.x), Math.min(start.y, end.y),
-                Math.abs(end.x - start.x), Math.abs(end.y - start.y), radius * stretch, variant, tint, lightX, lightY,
-                energy, opacity, Scissor.current()));
     }
 
     private static Font atlas(float size, Font small, Font large) {

@@ -33,7 +33,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 public final class AutoCrystal extends Module {
-    private static final long SPAWN_WAIT = 250;
+    private static final long SPAWN_TIMEOUT_MILLIS = 250;
     private static final RotationConfig SNAP = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
 
     private final SliderSetting delay = add(new SliderSetting("delay", 50, 50, 500, Measure.MILLIS));
@@ -114,7 +114,7 @@ public final class AutoCrystal extends Module {
                 hit = crystal;
                 next = top;
             }
-        } else if (mc.level.isEmptyBlock(above) && (!awaitingSpawn || sincePlace.elapsed(SPAWN_WAIT))) {
+        } else if (mc.level.isEmptyBlock(above) && (!awaitingSpawn || sincePlace.elapsed(SPAWN_TIMEOUT_MILLIS))) {
             BlockHitResult spot = Placement.clickOn(mc.level, eye, base);
             next = spot == null ? top : spot.getLocation();
             if (spot != null && ready && Placement.looksAt(mc.level, base, eye, look, player.blockInteractionRange()) && place(player, spot)) {

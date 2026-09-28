@@ -153,11 +153,9 @@ final class HsvWindow {
         Draw.hueBar(graphics, squareX, hueY, squareWidth, hueHeight, hueHeight / 2);
         marker(graphics, squareX + hue * squareWidth, hueY + hueHeight / 2f);
 
-        float buttonY = y + px(MARGIN + SQUARE_HEIGHT + MARGIN + HUE_HEIGHT + MARGIN);
-        float pasteX = x + width - px(MARGIN + BUTTON_WIDTH);
-        float copyX = pasteX - px(BUTTON_GAP + BUTTON_WIDTH);
-        button(graphics, copyX, buttonY, COPY_ICON);
-        button(graphics, pasteX, buttonY, PASTE_ICON);
+        float buttonY = buttonY(y);
+        button(graphics, copyX(x), buttonY, COPY_ICON);
+        button(graphics, pasteX(x), buttonY, PASTE_ICON);
         if (!isGradient()) {
             owner.text(graphics, Colors.hex(current()), x + px(MARGIN), buttonY + px(BUTTON_HEIGHT) / 2f,
                     px(HEX_SIZE), Theme.DIM);
@@ -168,6 +166,18 @@ final class HsvWindow {
         owner.rect(graphics, ringX - px(1), buttonY - px(1), size + px(2), size + px(2), px(4), Theme.ACCENT);
         owner.rect(graphics, swatchX(x, 0), buttonY, size, size, px(3), Colors.opaque(get.getAsInt()));
         owner.rect(graphics, swatchX(x, 1), buttonY, size, size, px(3), Colors.opaque(secondaryGet.getAsInt()));
+    }
+
+    private float buttonY(float y) {
+        return y + px(MARGIN + SQUARE_HEIGHT + MARGIN + HUE_HEIGHT + MARGIN);
+    }
+
+    private float pasteX(float x) {
+        return x + px(WIDTH) - px(MARGIN + BUTTON_WIDTH);
+    }
+
+    private float copyX(float x) {
+        return pasteX(x) - px(BUTTON_GAP + BUTTON_WIDTH);
     }
 
     private float swatchX(float x, float index) {
@@ -189,12 +199,12 @@ final class HsvWindow {
     }
 
     void click(double mouseX, double mouseY, float x, float y) {
-        float buttonY = y + px(MARGIN + SQUARE_HEIGHT + MARGIN + HUE_HEIGHT + MARGIN);
+        float buttonY = buttonY(y);
         float squareY = y + px(MARGIN);
         float hueY = y + px(MARGIN + SQUARE_HEIGHT + MARGIN);
         if (mouseY >= buttonY && mouseY < buttonY + px(BUTTON_HEIGHT)) {
-            float pasteX = x + px(WIDTH) - px(MARGIN + BUTTON_WIDTH);
-            float copyX = pasteX - px(BUTTON_GAP + BUTTON_WIDTH);
+            float pasteX = pasteX(x);
+            float copyX = copyX(x);
             if (mouseX >= copyX && mouseX < copyX + px(BUTTON_WIDTH)) copy();
             else if (mouseX >= pasteX && mouseX < pasteX + px(BUTTON_WIDTH)) paste();
             else if (isGradient()) selectSwatch(mouseX, x);

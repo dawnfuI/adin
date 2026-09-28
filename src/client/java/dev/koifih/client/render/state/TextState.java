@@ -86,9 +86,12 @@ public record TextState(Matrix3x2fc pose, TextureSetup textureSetup, Glyphs glyp
         var bounds = new ScreenRectangle((int) Math.floor(glyphs.left), (int) Math.floor(glyphs.top),
                 (int) Math.ceil(glyphs.right) - (int) Math.floor(glyphs.left),
                 (int) Math.ceil(glyphs.bottom) - (int) Math.floor(glyphs.top)).transformMaxBounds(pose);
-        var textureSetup = SETUPS.computeIfAbsent(Minecraft.getInstance().getTextureManager().getTexture(atlas), texture ->
+        return new TextState(pose, texture(atlas), glyphs, pipeline, backdrop, bounds, Scissor.current());
+    }
+
+    public static TextureSetup texture(Identifier id) {
+        return SETUPS.computeIfAbsent(Minecraft.getInstance().getTextureManager().getTexture(id), texture ->
                 TextureSetup.singleTexture(texture.getTextureView(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR)));
-        return new TextState(pose, textureSetup, glyphs, pipeline, backdrop, bounds, Scissor.current());
     }
 
     @Override

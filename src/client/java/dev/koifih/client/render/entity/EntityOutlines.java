@@ -28,8 +28,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.renderer.BindGroupLayouts;
 import net.minecraft.resources.Identifier;
-import org.joml.Vector4f;
-import org.joml.Vector4fc;
 import org.lwjgl.system.MemoryStack;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -42,7 +40,6 @@ public final class EntityOutlines {
     private static final int CONFIG_SIZE = 48;
     private static final int SCALE_STEPS = 63;
     private static final int SCALE_BITS = 0x030303;
-    private static final Vector4fc CLEAR = new Vector4f();
     private static final BindGroupLayout CONFIG = BindGroupLayout.builder()
             .withUniform("OutlineConfig", UniformType.UNIFORM_BUFFER)
             .build();
@@ -143,9 +140,9 @@ public final class EntityOutlines {
         upload(encoder, outline);
         if (outline.glow() > 0f) glow(encoder, mask, width, height, target, depth, outline, inkArea, readArea);
         scratch = target(scratch, "scratch", width, height);
-        pass(encoder, "scan", SCAN, scratch.getColorTextureView(), null, false, readArea, config,
+        pass(encoder, "scan", SCAN, scratch.getColorTextureView(), null, readArea,
                 new Binding("InSampler", mask, nearest()));
-        pass(encoder, "ink", INK, target, depth, false, inkArea, config,
+        pass(encoder, "ink", INK, target, depth, inkArea,
                 new Binding("InSampler", scratch.getColorTextureView(), nearest()));
     }
 
@@ -154,19 +151,19 @@ public final class EntityOutlines {
         if (blur == null) blur = new KawaseBlur("outline " + name);
         ScreenRectangle half = readArea == null ? null : readArea.half().rectangle();
         GpuTextureView blurred = blur.blur(encoder, mask, width, height, outline.radius(), half);
-        pass(encoder, "glow", GLOW, target, depth, false, inkArea, config,
+        pass(encoder, "glow", GLOW, target, depth, inkArea,
                 new Binding("InSampler", blurred, linear()), new Binding("MaskSampler", blur.downsampled(), linear()));
     }
 
     private void pass(CommandEncoder encoder, String label, RenderPipeline pipeline, GpuTextureView color,
-                      GpuTextureView depth, boolean clear, Area area, GpuBuffer uniform, Binding... textures) {
+                      GpuTextureView depth, Area area, Binding... textures) {
         try (RenderPass pass = encoder.createRenderPass(() -> "adin outline " + name + " " + label, color,
-                clear ? Optional.of(CLEAR) : Optional.empty(), depth, OptionalDouble.empty())) {
+                Optional.empty(), depth, OptionalDouble.empty())) {
             pass.setPipeline(pipeline);
             if (area != null) pass.enableScissor(area.x0(), area.y0(), area.x1() - area.x0(), area.y1() - area.y0());
             RenderSystem.bindDefaultUniforms(pass);
             for (Binding texture : textures) pass.bindTexture(texture.name(), texture.view(), texture.sampler());
-            pass.setUniform("OutlineConfig", uniform.slice());
+            pass.setUniform("OutlineConfig", config.slice());
             pass.draw(3, 1, 0, 0);
         }
     }

@@ -231,95 +231,109 @@ public final class ModulesPage implements Page {
         settingControls.clear();
         settingRows.clear();
         windows.clear();
+        buildBind(module);
+        for (Setting<?> setting : module.settings()) addSetting(setting);
+        alignValueColumn();
+        layoutRows();
+        relayout(layout);
+    }
+
+    private void buildBind(Module module) {
+        float scale = layout.scale();
+        int x = settingX();
+        int right = x + settingWidth();
+        int bindWidth = layout.atLeastOne(BIND_WIDTH);
+        int bindHeight = layout.atLeastOne(BIND_HEIGHT);
+        int modeWidth = layout.atLeastOne(BIND_MODE_WIDTH);
+        int helpSize = layout.atLeastOne(HELP_SIZE);
+        int modeX = right - modeWidth;
+        int bindX = module.activatable() ? right - bindWidth : modeX - layout.scaled(PanelLayout.GAP) - bindWidth;
+        bindControl = gui.add(new Keybind(bindX, settingY(0, bindHeight),
+                bindWidth, bindHeight, scale, Component.literal(Lang.get("keybind")), module::key, module::setKey));
+        settingControls.add(bindControl);
+        if (module.activatable()) return;
+        settingControls.add(gui.add(new Segmented(modeX, settingY(0, bindHeight), modeWidth, bindHeight, scale,
+                Component.literal("Bind mode"),
+                new Segmented.Segment[] {Segmented.Segment.of(AdinIcon.TOGGLE), Segmented.Segment.of(AdinIcon.HOLD)},
+                () -> module.hold() ? 1 : 0, index -> module.setHold(index == 1))));
+        settingControls.add(gui.add(bounded(new HelpDot(bindControl.getX() - layout.scaled(PanelLayout.GAP) - helpSize,
+                settingY(0, helpSize), helpSize, scale,
+                () -> Lang.get(module.hold() ? "bind.help.hold" : "bind.help.toggle")), x, right)));
+    }
+
+    private void addSetting(Setting<?> setting) {
+        Control control = settingControl(setting);
+        if (control == null) return;
+        int x = settingX();
+        int right = x + settingWidth();
+        int helpSize = layout.atLeastOne(HELP_SIZE);
+        String rowLabel = control instanceof Popup ? null : setting.name();
+        Transition reveal = new Transition(setting.isVisible() ? 1f : 0f, SETTING_REVEAL_MILLIS);
+        Control added = gui.add(control);
+        HelpDot help = setting.described()
+                ? gui.add(bounded(new HelpDot(added.getX() - layout.scaled(PanelLayout.GAP) - helpSize, 0, helpSize, layout.scale(),
+                        setting::description), x, right))
+                : null;
+        settingRows.add(new SettingRow(setting, added, rowLabel, reveal, help));
+    }
+
+    private Control settingControl(Setting<?> setting) {
         float scale = layout.scale();
         int x = settingX();
         int width = settingWidth();
         int right = x + width;
         int halfX = x + width / 2;
         int halfWidth = right - halfX;
-        int bindWidth = layout.atLeastOne(BIND_WIDTH);
         int bindHeight = layout.atLeastOne(BIND_HEIGHT);
-        int modeWidth = layout.atLeastOne(BIND_MODE_WIDTH);
         int fieldHeight = layout.atLeastOne(FIELD_HEIGHT);
         int toggleWidth = layout.atLeastOne(TOGGLE_WIDTH);
         int toggleHeight = layout.atLeastOne(TOGGLE_HEIGHT);
         int previewSize = layout.atLeastOne(PREVIEW_BUTTON_SIZE);
-        int helpSize = layout.atLeastOne(HELP_SIZE);
-
-        int modeX = right - modeWidth;
-        int bindX = module.activatable() ? right - bindWidth : modeX - layout.scaled(PanelLayout.GAP) - bindWidth;
-        bindControl = gui.add(new Keybind(bindX, settingY(0, bindHeight),
-                bindWidth, bindHeight, scale, Component.literal(Lang.get("keybind")), module::key, module::setKey));
-        settingControls.add(bindControl);
-        if (!module.activatable()) {
-            settingControls.add(gui.add(new Segmented(modeX, settingY(0, bindHeight), modeWidth, bindHeight, scale,
-                    Component.literal("Bind mode"),
-                    new Segmented.Segment[] {Segmented.Segment.of(AdinIcon.TOGGLE), Segmented.Segment.of(AdinIcon.HOLD)},
-                    () -> module.hold() ? 1 : 0, index -> module.setHold(index == 1))));
-            settingControls.add(gui.add(bounded(new HelpDot(bindControl.getX() - layout.scaled(PanelLayout.GAP) - helpSize,
-                    settingY(0, helpSize), helpSize, scale,
-                    () -> Lang.get(module.hold() ? "bind.help.hold" : "bind.help.toggle")), x, right)));
-        }
-
-        for (Setting<?> setting : module.settings()) {
-            Component label = Component.literal(setting.name());
-            Control control = switch (setting) {
-                case BoolSetting bool ->
-                        new Bool(right - toggleWidth, 0, toggleWidth, toggleHeight, scale, label, bool::get, bool::set);
-                case SliderSetting value -> {
-                    Slider slider = new Slider(halfX, 0, halfWidth, bindHeight, scale, label,
-                            value.min(), value.max(), value::get, value::set);
-                    slider.setFormat(value::format);
-                    yield slider;
-                }
-                case RangeSetting range -> {
-                    Slider slider = Slider.range(halfX, 0, halfWidth, bindHeight, scale, label,
-                            range.min(), range::max, range::low, range::setLow, range::high, range::setHigh);
-                    slider.setFormat(range::format);
-                    yield slider;
-                }
-                case EnumSetting choice -> {
-                    Dropdown select = Dropdown.single(x, 0, width, fieldHeight, scale, label, choice.options(), choice::get, choice::set);
-                    select.setArt(choice.icons(), choice.images());
-                    yield bounded(select);
-                }
-                case MultiSetting multi -> {
-                    Dropdown select = Dropdown.multi(x, 0, width, fieldHeight, scale, label, multi.options(), multi::get);
-                    select.setOptionVisible(multi::isOptionVisible);
-                    yield bounded(select);
-                }
-                case ColorSetting color -> {
-                    ColorPicker picker = new ColorPicker(x, 0, width, fieldHeight, scale, label, color::get, color::set);
-                    picker.gradient(color::secondary, color::setSecondary, color::isGradient);
-                    yield bounded(picker);
-                }
-                case EntitySetting entities ->
-                        windowed(new CatalogPicker(x, 0, width, fieldHeight, scale, label, Catalog.ENTITIES, entities::get));
-                case BlockSetting blocks ->
-                        windowed(new CatalogPicker(x, 0, width, fieldHeight, scale, label, Catalog.BLOCKS, blocks::get));
-                case PreviewSetting preview ->
-                        Button.icon(right - previewSize, 0, previewSize, scale, AdinIcon.PREVIEW, () -> Theme.OVERLAY, label, () -> gui.openPreview(preview));
-                case CapeSetting cape ->
-                        Button.icon(right - previewSize, 0, previewSize, scale, AdinIcon.PREVIEW, () -> Theme.OVERLAY, label, () -> gui.openCapeCatalog(cape));
-                case HotbarSetting hotbar -> {
-                    int pickerWidth = HotbarPicker.preferredWidth(bindHeight, scale);
-                    yield new HotbarPicker(right - pickerWidth, 0, pickerWidth, bindHeight, scale, label, hotbar::has, hotbar::toggle);
-                }
-                default -> null;
-            };
-            if (control == null) continue;
-            String rowLabel = control instanceof Popup ? null : setting.name();
-            Transition reveal = new Transition(setting.isVisible() ? 1f : 0f, SETTING_REVEAL_MILLIS);
-            Control added = gui.add(control);
-            HelpDot help = setting.described()
-                    ? gui.add(bounded(new HelpDot(added.getX() - layout.scaled(PanelLayout.GAP) - helpSize, 0, helpSize, scale,
-                            setting::description), x, right))
-                    : null;
-            settingRows.add(new SettingRow(setting, added, rowLabel, reveal, help));
-        }
-        alignValueColumn();
-        layoutRows();
-        relayout(layout);
+        Component label = Component.literal(setting.name());
+        return switch (setting) {
+            case BoolSetting bool ->
+                    new Bool(right - toggleWidth, 0, toggleWidth, toggleHeight, scale, label, bool::get, bool::set);
+            case SliderSetting value -> {
+                Slider slider = new Slider(halfX, 0, halfWidth, bindHeight, scale, label,
+                        value.min(), value.max(), value::get, value::set);
+                slider.setFormat(value::format);
+                yield slider;
+            }
+            case RangeSetting range -> {
+                Slider slider = Slider.range(halfX, 0, halfWidth, bindHeight, scale, label,
+                        range.min(), range::max, range::low, range::setLow, range::high, range::setHigh);
+                slider.setFormat(range::format);
+                yield slider;
+            }
+            case EnumSetting choice -> {
+                Dropdown select = Dropdown.single(x, 0, width, fieldHeight, scale, label, choice.options(), choice::get, choice::set);
+                select.setArt(choice.icons(), choice.images());
+                yield bounded(select);
+            }
+            case MultiSetting multi -> {
+                Dropdown select = Dropdown.multi(x, 0, width, fieldHeight, scale, label, multi.options(), multi::get);
+                select.setOptionVisible(multi::isOptionVisible);
+                yield bounded(select);
+            }
+            case ColorSetting color -> {
+                ColorPicker picker = new ColorPicker(x, 0, width, fieldHeight, scale, label, color::get, color::set);
+                picker.gradient(color::secondary, color::setSecondary, color::isGradient);
+                yield bounded(picker);
+            }
+            case EntitySetting entities ->
+                    windowed(new CatalogPicker(x, 0, width, fieldHeight, scale, label, Catalog.ENTITIES, entities::get));
+            case BlockSetting blocks ->
+                    windowed(new CatalogPicker(x, 0, width, fieldHeight, scale, label, Catalog.BLOCKS, blocks::get));
+            case PreviewSetting preview ->
+                    Button.icon(right - previewSize, 0, previewSize, scale, AdinIcon.PREVIEW, () -> Theme.OVERLAY, label, () -> gui.openPreview(preview));
+            case CapeSetting cape ->
+                    Button.icon(right - previewSize, 0, previewSize, scale, AdinIcon.PREVIEW, () -> Theme.OVERLAY, label, () -> gui.openCapeCatalog(cape));
+            case HotbarSetting hotbar -> {
+                int pickerWidth = HotbarPicker.preferredWidth(bindHeight, scale);
+                yield new HotbarPicker(right - pickerWidth, 0, pickerWidth, bindHeight, scale, label, hotbar::has, hotbar::toggle);
+            }
+            default -> null;
+        };
     }
 
     private void alignValueColumn() {
@@ -510,7 +524,6 @@ public final class ModulesPage implements Page {
     public List<Popup> popups() {
         List<Popup> popups = new ArrayList<>();
         for (RowControl control : rowControls) if (control.widget() instanceof Popup popup) popups.add(popup);
-        for (Control control : settingControls) if (control instanceof Popup popup) popups.add(popup);
         for (SettingRow row : settingRows) if (row.control() instanceof Popup popup) popups.add(popup);
         return popups;
     }
@@ -614,10 +627,7 @@ public final class ModulesPage implements Page {
                 offset += rowShown;
             }
         });
-        for (Control control : settingControls) {
-            if (control instanceof Popup popup) popup.renderPopup(graphics, mouseX, mouseY);
-            if (control instanceof HelpDot help) help.renderTooltip(graphics);
-        }
+        for (Control control : settingControls) if (control instanceof HelpDot help) help.renderTooltip(graphics);
         for (SettingRow row : settingRows) {
             if (row.control() instanceof Popup popup && row.shown() >= 1f) popup.renderPopup(graphics, mouseX, mouseY);
             if (row.help() != null && row.shown() >= 1f) row.help().renderTooltip(graphics);
