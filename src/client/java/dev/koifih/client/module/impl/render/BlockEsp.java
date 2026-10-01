@@ -45,13 +45,12 @@ public final class BlockEsp extends Module {
 
     private void onTick(PreTickEvent event) {
         if (mc.player == null) return;
-        if (!blocks.get().equals(tracked) || BlockRenderer.drifted(mc.player.position())) apply();
+        if (!blocks.get().equals(tracked)) apply();
         else BlockRenderer.configure(spec());
     }
 
     private void apply() {
         tracked = Set.copyOf(blocks.get());
-        if (mc.player != null) BlockRenderer.anchor(mc.player.position());
         Set<Block> selected = new HashSet<>();
         for (String id : tracked) {
             Identifier identifier = Identifier.tryParse(id);

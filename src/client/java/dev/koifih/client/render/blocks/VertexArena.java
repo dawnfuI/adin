@@ -25,12 +25,9 @@ final class VertexArena {
     }
 
     private static final long INITIAL_CAPACITY = 1 << 20;
-    private static final int VERTICES_PER_PRIMITIVE = 4;
-    private static final int INDICES_PER_PRIMITIVE = 6;
     private static final int USAGE = GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST | GpuBuffer.USAGE_COPY_SRC;
 
     private final String label;
-    private final int vertexSize;
     private final Long2ObjectOpenHashMap<Range> byKey = new Long2ObjectOpenHashMap<>();
     private final List<Range> ordered = new ArrayList<>();
     private GpuBuffer buffer;
@@ -69,14 +66,6 @@ final class VertexArena {
 
     boolean isEmpty() {
         return live == 0;
-    }
-
-    int indexCount(long bytes) {
-        return (int) (bytes / vertexSize / VERTICES_PER_PRIMITIVE * INDICES_PER_PRIMITIVE);
-    }
-
-    int usedIndices() {
-        return indexCount(used);
     }
 
     void close() {
