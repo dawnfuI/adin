@@ -7,6 +7,7 @@ import dev.koifih.client.event.events.PacketProcessEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
@@ -14,6 +15,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
 import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
 import net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
@@ -23,7 +25,9 @@ import net.minecraft.network.protocol.game.ClientboundSetHealthPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.network.protocol.game.ClientboundStartConfigurationPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -52,6 +56,14 @@ public final class Backtracker {
         }
     }
 
+    private static final Set<SoundEvent> FEEDBACK_SOUNDS = Set.of(
+            SoundEvents.PLAYER_HURT,
+            SoundEvents.PLAYER_ATTACK_CRIT,
+            SoundEvents.PLAYER_ATTACK_KNOCKBACK,
+            SoundEvents.PLAYER_ATTACK_NODAMAGE,
+            SoundEvents.PLAYER_ATTACK_STRONG,
+            SoundEvents.PLAYER_ATTACK_SWEEP,
+            SoundEvents.PLAYER_ATTACK_WEAK);
     private static final ConcurrentLinkedQueue<Held> QUEUE = new ConcurrentLinkedQueue<>();
     private static volatile boolean holding;
 
@@ -69,6 +81,11 @@ public final class Backtracker {
 
     public static boolean isLagging() {
         return !QUEUE.isEmpty();
+    }
+
+    public static long heldMillis() {
+        Held head = QUEUE.peek();
+        return head == null ? 0L : System.currentTimeMillis() - head.at;
     }
 
     public static Iterable<Held> held() {
@@ -94,15 +111,24 @@ public final class Backtracker {
 
     private static boolean immediate(Packet<?> packet) {
         return packet instanceof ClientboundKeepAlivePacket
+                || packet instanceof ClientboundDisconnectPacket
                 || packet instanceof ClientboundSystemChatPacket
                 || packet instanceof ClientboundPlayerChatPacket
                 || packet instanceof ClientboundDisguisedChatPacket
-                || packet instanceof ClientboundSoundPacket sound && sound.getSound().value() == SoundEvents.PLAYER_HURT;
+                || packet instanceof ClientboundSoundPacket sound && FEEDBACK_SOUNDS.contains(sound.getSound().value())
+                || packet instanceof ClientboundAnimatePacket animate && critical(animate);
+    }
+
+    private static boolean critical(ClientboundAnimatePacket animate) {
+        return animate.getAction() == ClientboundAnimatePacket.CRITICAL_HIT
+                || animate.getAction() == ClientboundAnimatePacket.MAGIC_CRITICAL_HIT;
     }
 
     public static void release(long delayMillis) {
         long now = System.currentTimeMillis();
-        Held head;
+        Held head = QUEUE.peek();
+        if (head == null || now - head.at < delayMillis) return;
+        flushVanilla();
         while ((head = QUEUE.peek()) != null && now - head.at >= delayMillis) {
             Held next = QUEUE.poll();
             if (next == null) return;
@@ -111,6 +137,7 @@ public final class Backtracker {
     }
 
     public static void releaseThrough(Held last) {
+        flushVanilla();
         Held head;
         while ((head = QUEUE.poll()) != null) {
             dispatch(head);
@@ -119,8 +146,15 @@ public final class Backtracker {
     }
 
     public static void releaseAll() {
+        if (QUEUE.isEmpty()) return;
+        flushVanilla();
         Held head;
         while ((head = QUEUE.poll()) != null) dispatch(head);
+    }
+
+    private static void flushVanilla() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.packetProcessor().isSameThread()) client.packetProcessor().processQueuedPackets();
     }
 
     public static void drop() {

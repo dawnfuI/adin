@@ -35,6 +35,7 @@ public final class Backtrack extends Module {
     private static final int VISUALIZE_BOTH = 2;
     private static final long TRACKING_BUFFER_MILLIS = 500L;
     private static final long ATTACK_WINDOW_MILLIS = 1000L;
+    private static final long MAX_FREEZE_MILLIS = 1000L;
     private static final int MIN_TICKS = 10;
     private static final int HURT_TIME = 3;
     private static final float LINE_WIDTH = 2f;
@@ -174,7 +175,13 @@ public final class Backtrack extends Module {
 
     private boolean holding(Minecraft client, LocalPlayer player) {
         if (target == null || !target.isAlive() || target.level() != client.level) return false;
-        return frozen() || shouldBacktrack(player, target);
+        if (!shouldBacktrack(player, target)) return false;
+        return !frozen() || freezing(player);
+    }
+
+    private boolean freezing(LocalPlayer player) {
+        return Backtracker.heldMillis() < MAX_FREEZE_MILLIS
+                && boxedDistanceSqr(target, tracked.get(), player.getEyePosition()) <= square(player.entityInteractionRange());
     }
 
     private boolean shouldBacktrack(LocalPlayer player, LivingEntity entity) {
