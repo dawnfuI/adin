@@ -43,6 +43,7 @@ public final class ConfigStore {
         if (config.description == null) config.description = "";
         if (config.author == null) config.author = "";
         if (config.scope == null) config.scope = Config.Scope.BOTH;
+        if (config.visibility == null) config.visibility = Config.Visibility.PRIVATE;
         if (config.version <= 0) config.version = State.VERSION;
         return true;
     }
@@ -55,17 +56,29 @@ public final class ConfigStore {
         return Storage.delete(path(config.id));
     }
 
-    public static Config create(String name, String description, Config.Scope scope) {
+    public static Config create(String name, String description, Config.Scope scope, Config.Visibility visibility) {
         Config config = new Config();
         config.name = name.trim();
         config.description = description.trim();
         config.scope = scope;
+        config.visibility = visibility;
         config.author = Minecraft.getInstance().getUser().getName();
         config.created = System.currentTimeMillis();
         config.id = uniqueId(config.name);
         Snapshot.capture(config, scope != Config.Scope.SETTINGS, scope != Config.Scope.COLORS);
         save(config);
         return config;
+    }
+
+    public static Config importPublic(Config config) {
+        if (config == null || !normalize(config, config.id == null ? "" : config.id)) return null;
+        config.id = uniqueId(slug(config.id.isBlank() ? config.name : config.id));
+        config.visibility = Config.Visibility.PRIVATE;
+        return save(config) ? config : null;
+    }
+
+    public static String export(Config config) {
+        return Storage.json(config);
     }
 
     public static void apply(Config config) {
