@@ -56,6 +56,19 @@ public final class Storage {
         }
     }
 
+    public static <T> T read(String json, Class<T> type) {
+        try {
+            return GSON.fromJson(json, type);
+        } catch (RuntimeException exception) {
+            Adin.LOGGER.warn("Cannot read config JSON", exception);
+            return null;
+        }
+    }
+
+    public static String json(Object value) {
+        return GSON.toJson(value);
+    }
+
     public static boolean write(Path path, Object value) {
         Path temporary = path.resolveSibling(path.getFileName() + ".tmp");
         try {

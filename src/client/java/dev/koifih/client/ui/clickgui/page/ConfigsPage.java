@@ -17,6 +17,7 @@ import dev.koifih.client.ui.component.Segmented;
 import dev.koifih.client.ui.component.TextInput;
 import dev.koifih.client.util.Lang;
 import lombok.RequiredArgsConstructor;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -35,6 +36,7 @@ public final class ConfigsPage implements Page {
     private static final int DIALOG_TITLE = 16;
     private static final int DIALOG_ROW = 22;
     private static final int DELETE_ICON = 0xe872;
+    private static final int COPY_ICON = 0xe14d;
     private static final int ADD_ICON = 0xe145;
     private static final int ADD_HEIGHT = 22;
 
@@ -52,10 +54,12 @@ public final class ConfigsPage implements Page {
     private TextInput nameInput;
     private TextInput descriptionInput;
     private Segmented scopeInput;
+    private Segmented visibilityInput;
     private Button createButton;
     private String name = "";
     private String description = "";
     private int scope = Config.Scope.BOTH.ordinal();
+    private int visibility = Config.Visibility.PRIVATE.ordinal();
     private boolean dialogOpen;
 
     @Override
@@ -92,8 +96,10 @@ public final class ConfigsPage implements Page {
             int loadX = deleteX - layout.scaled(GAP) - loadWidth;
             cardControls.add(gui.add(new Button(loadX, cardY + (cardHeight - buttonHeight) / 2, loadWidth, buttonHeight, scale,
                     Component.literal(loadLabel), () -> load(config))));
-            cardControls.add(gui.add(Button.icon(deleteX, cardY + (cardHeight - deleteSize) / 2, deleteSize, scale, DELETE_ICON,
-                    Component.literal(Lang.get("configs.delete")), () -> delete(config))));
+            boolean publicConfig = config.visibility == Config.Visibility.PUBLIC;
+            cardControls.add(gui.add(Button.icon(deleteX, cardY + (cardHeight - deleteSize) / 2, deleteSize, scale,
+                    publicConfig ? COPY_ICON : DELETE_ICON, Component.literal(Lang.get(publicConfig ? "configs.export" : "configs.delete")),
+                    () -> { if (publicConfig) export(config); else delete(config); })));
         }
         addButton = gui.add(Button.tile(layout.rowX(), cardY(visibleCount()), layout.rowWidth(), layout.atLeastOne(ADD_HEIGHT), scale,
                 Component.literal(makeLabel), ADD_ICON, this::openCreate));
@@ -118,12 +124,16 @@ public final class ConfigsPage implements Page {
         int scopeWidth = Math.min(scopeMax, Segmented.preferredWidth(scopes, scale));
         scopeInput = gui.add(new Segmented(scopeRight - scopeWidth, dialogRowY(dialogY, 2) + (rowHeight - inputHeight) / 2, scopeWidth, inputHeight, scale,
                 Component.literal(Lang.get("configs.include")), scopes, () -> scope, value -> scope = value));
+        Segmented.Segment[] visibilities = {Segmented.Segment.of(Lang.get("configs.visibility.private")), Segmented.Segment.of(Lang.get("configs.visibility.public"))};
+        int visibilityWidth = Math.min(scopeMax, Segmented.preferredWidth(visibilities, scale));
+        visibilityInput = gui.add(new Segmented(scopeRight - visibilityWidth, dialogRowY(dialogY, 3) + (rowHeight - inputHeight) / 2, visibilityWidth, inputHeight, scale,
+                Component.literal(Lang.get("configs.visibility")), visibilities, () -> visibility, value -> visibility = value));
         String createLabel = Lang.get("configs.create");
         int createWidth = Button.preferredWidth(createLabel, scale);
         createButton = gui.add(new Button(dialogX + dialogWidth - layout.scaled(DIALOG_PADDING) - createWidth,
-                dialogRowY(dialogY, 3) + (rowHeight - buttonHeight) / 2, createWidth, buttonHeight, scale,
+                dialogRowY(dialogY, 4) + (rowHeight - buttonHeight) / 2, createWidth, buttonHeight, scale,
                 Component.literal(createLabel), this::create));
-        createControls.addAll(List.of(nameInput, descriptionInput, scopeInput, createButton));
+        createControls.addAll(List.of(nameInput, descriptionInput, scopeInput, visibilityInput, createButton));
 
         updateInputStates();
     }
@@ -146,7 +156,7 @@ public final class ConfigsPage implements Page {
     }
 
     private int createDialogHeight() {
-        return 2 * layout.scaled(DIALOG_PADDING) + layout.scaled(DIALOG_TITLE) + 4 * layout.atLeastOne(DIALOG_ROW);
+        return 2 * layout.scaled(DIALOG_PADDING) + layout.scaled(DIALOG_TITLE) + 5 * layout.atLeastOne(DIALOG_ROW);
     }
 
     private int createDialogY() {
@@ -166,6 +176,7 @@ public final class ConfigsPage implements Page {
         name = "";
         description = "";
         scope = Config.Scope.BOTH.ordinal();
+        visibility = Config.Visibility.PRIVATE.ordinal();
         dialogOpen = true;
         dialogReveal.set(1f);
         updateInputStates();
@@ -182,7 +193,7 @@ public final class ConfigsPage implements Page {
 
     private void create() {
         if (name.isBlank()) return;
-        ConfigStore.create(name, description, Config.Scope.values()[scope]);
+        ConfigStore.create(name, description, Config.Scope.values()[scope], Config.Visibility.values()[visibility]);
         closeDialog();
         gui.requestRebuild();
     }
@@ -195,6 +206,10 @@ public final class ConfigsPage implements Page {
     private void delete(Config config) {
         ConfigStore.delete(config);
         gui.requestRebuild();
+    }
+
+    private void export(Config config) {
+        Minecraft.getInstance().keyboardHandler.setClipboard(ConfigStore.export(config));
     }
 
     @Override
@@ -292,7 +307,7 @@ public final class ConfigsPage implements Page {
             float textWidth = loadButton.getX() - GAP * scale - textX;
             String title = Text.fit(config.name, textWidth, 8.5f * scale);
             String author = config.author == null ? "" : config.author;
-            String details = (author.isBlank() ? "" : author + " · ") + scopeText(config);
+            String details = (author.isBlank() ? "" : author + " · ") + scopeText(config) + " · " + visibilityText(config);
             String subtitle = Text.fit(config.description.isBlank() ? details : config.description + " · " + details,
                     textWidth, 6.8f * scale);
             Text.drawCentered(graphics, title, textX, y + 13 * scale, 8.5f * scale, Theme.TEXT);
@@ -315,12 +330,17 @@ public final class ConfigsPage implements Page {
             float textX = x + DIALOG_PADDING * scale;
             float titleY = y + (DIALOG_PADDING + DIALOG_TITLE * 0.5f) * scale;
             Text.drawCentered(graphics, Lang.get("configs.new"), textX, titleY, 8 * scale, Theme.TEXT);
-            String[] labels = {Lang.get("configs.name"), Lang.get("configs.description"), Lang.get("configs.include")};
+            String[] labels = {Lang.get("configs.name"), Lang.get("configs.description"), Lang.get("configs.include"), Lang.get("configs.visibility")};
             for (int row = 0; row < labels.length; row++) {
                 Text.drawCentered(graphics, labels[row], textX,
                         dialogRowY(y, row) + layout.atLeastOne(DIALOG_ROW) * 0.5f, 7 * scale, Theme.TEXT);
             }
             for (Control control : createControls) control.extractRenderState(graphics, mouseX, mouseY, delta);
         });
+    }
+
+    private static String visibilityText(Config config) {
+        return config.visibility == Config.Visibility.PUBLIC
+                ? Lang.get("configs.visibility.public") : Lang.get("configs.visibility.private");
     }
 }
