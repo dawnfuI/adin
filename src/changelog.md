@@ -2,3 +2,4 @@
 - added XbowCart
 - Fixed rotations flagging AimModulo360
 - added SprintReset
+- added new backtrack preview (credits astralis)

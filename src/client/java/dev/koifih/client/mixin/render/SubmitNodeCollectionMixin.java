@@ -48,7 +48,8 @@ public abstract class SubmitNodeCollectionMixin {
             collection.submitModel(model, state, pose, EntityFills.occluded(texture, fill.effect()), fill.light(), fill.occludedOverlay(),
                     fill.occluded(), sprite, 0, crumbling);
         }
-        RenderType visible = hand ? EntityFills.visibleHand(texture, fill.effect()) : EntityFills.visible(texture, fill.effect());
+        RenderType visible = fill.ghost() ? EntityFills.ghost(texture)
+                : hand ? EntityFills.visibleHand(texture, fill.effect()) : EntityFills.visible(texture, fill.effect());
         collection.submitModel(model, state, pose, visible, fill.light(), fill.visibleOverlay(), fill.visible(), sprite, 0, crumbling);
         info.cancel();
     }

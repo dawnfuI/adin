@@ -71,6 +71,7 @@ public final class PreviewWindow {
     private final Transition reveal = new Transition(0f, REVEAL_MILLIS, 110, Transition.Easing.EASE_OUT_SETTLE, Transition.Easing.EASE_IN_CUBIC);
     private final Transition yaw = new Transition(DEFAULT_YAW, 200);
     private final Transition facing = new Transition(0f, FACING_MILLIS);
+    private final Transition trailFacing = new Transition(0f, FACING_MILLIS);
     private PanelLayout layout;
     private Button back;
     private TextInput nameInput;
@@ -306,22 +307,17 @@ public final class PreviewWindow {
 
     private void drawBacktrack(GuiGraphicsExtractor graphics, BacktrackPreview backtrack, int x0, int y0, int x1, int y1) {
         float now = Time.seconds();
+        float then = now - backtrack.delayMillis() / 1000f;
         float period = 4f * WALK_AMPLITUDE / WALK_SPEED;
         float modelX = walkOffset(now, period);
-        float trailX = backtrack.frozen() ? 0f
-                : modelX + Math.clamp(walkOffset(now - backtrack.delayMillis() / 1000f, period) - modelX, -MAX_TRAIL, MAX_TRAIL);
+        boolean frozen = backtrack.frozen();
+        float trailX = frozen ? 0f : modelX + Math.clamp(walkOffset(then, period) - modelX, -MAX_TRAIL, MAX_TRAIL);
         facing.set(walkingBack(now, period) ? 180f : 0f);
-        Projector projector = EntityPreview.playerProjector(x0, y0, x1, y1, yaw.value(), trailX);
-        AABB bounds = EntityPreview.playerLocalBounds();
-        if (projector == null || bounds == null) return;
-        if (!EntityPreview.drawWalkingPlayer(graphics, x0, y0, x1, y1, yaw.value() + facing.value(), currentSkin(),
-                modelX, now * PreviewPose.WALK_RATE, PreviewPose.WALK_SPEED)) {
-            return;
-        }
-        float pixel = 1f / Math.max(1, Minecraft.getInstance().getWindow().getGuiScale());
-        ScreenBuffer buffer = new ScreenBuffer();
-        Boxes.collect(buffer, Boxes.project(projector, bounds), backtrack.style().scaled(pixel));
-        ScreenRenderer.submit(graphics, buffer);
+        trailFacing.set(!frozen && walkingBack(then, period) ? 180f : 0f);
+        EntityPreview.drawWalkingGhost(graphics, x0, y0, x1, y1, yaw.value() + trailFacing.value(), currentSkin(),
+                trailX, then * PreviewPose.WALK_RATE, frozen ? 0f : PreviewPose.WALK_SPEED);
+        EntityPreview.drawWalkingPlayer(graphics, x0, y0, x1, y1, yaw.value() + facing.value(), currentSkin(),
+                modelX, now * PreviewPose.WALK_RATE, PreviewPose.WALK_SPEED);
     }
 
     private static float walkPhase(float seconds, float period) {

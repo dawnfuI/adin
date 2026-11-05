@@ -26,6 +26,7 @@ import java.util.Set;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EntityFills {
     public static final int EFFECTS = 6;
+    public static final int GHOST = EFFECTS + 1;
 
     private static final String TEXTURE = "Sampler0";
     private static final ColorTargetState TRANSLUCENT = new ColorTargetState(BlendFunction.TRANSLUCENT);
@@ -35,12 +36,14 @@ public final class EntityFills {
     private static final RenderPipeline[] HAND = pipelines("hand", TRANSLUCENT, DepthStencilState.DEFAULT, true);
     private static final RenderPipeline SILHOUETTE = pipeline("silhouette", 0, ColorTargetState.DEFAULT,
             new DepthStencilState(CompareOp.ALWAYS_PASS, false), true);
+    private static final RenderPipeline GHOST_BODY = pipeline("ghost", GHOST, ColorTargetState.DEFAULT, DepthStencilState.DEFAULT, false);
     private static final OutputTarget OUTLINE = new OutputTarget(Adin.MOD_ID + ":outline", EntityOutlines::mask);
     private static final Set<RenderPipeline> ALL = new HashSet<>();
     private static final Map<Key, RenderType> VISIBLE_TYPES = new HashMap<>();
     private static final Map<Key, RenderType> OCCLUDED_TYPES = new HashMap<>();
     private static final Map<Key, RenderType> HAND_TYPES = new HashMap<>();
     private static final Map<Identifier, RenderType> SILHOUETTE_TYPES = new HashMap<>();
+    private static final Map<Identifier, RenderType> GHOST_TYPES = new HashMap<>();
 
     private static EntityFill hand;
     private static boolean handPass;
@@ -52,6 +55,7 @@ public final class EntityFills {
         for (RenderPipeline pipeline : VISIBLE) ALL.add(pipeline);
         for (RenderPipeline pipeline : HAND) ALL.add(pipeline);
         ALL.add(SILHOUETTE);
+        ALL.add(GHOST_BODY);
     }
 
     public static void beginHand(EntityFill fill) {
@@ -87,6 +91,10 @@ public final class EntityFills {
 
     public static RenderType occluded(Identifier texture, int effect) {
         return OCCLUDED_TYPES.computeIfAbsent(new Key(texture, effect), key -> create("occluded", OCCLUDED[key.effect()], key));
+    }
+
+    public static RenderType ghost(Identifier texture) {
+        return GHOST_TYPES.computeIfAbsent(texture, key -> create("ghost", GHOST_BODY, new Key(key, GHOST)));
     }
 
     public static boolean isFill(RenderType type) {

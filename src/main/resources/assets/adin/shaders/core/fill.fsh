@@ -47,6 +47,7 @@ vec3 localPosition() {
 #moj_import <adin:effect/ocean.glsl>
 #moj_import <adin:effect/lava.glsl>
 #moj_import <adin:effect/sky.glsl>
+#moj_import <adin:effect/ghost.glsl>
 
 vec3 pattern(vec2 uv, vec3 base, float time) {
 #if EFFECT == 1
@@ -87,6 +88,8 @@ void main() {
     vec3 color = gradientColor(base);
 #elif EFFECT == 2
     vec3 color = metallic(base, time);
+#elif EFFECT == 7
+    vec3 color = ghost(texture(Sampler0, texCoord0).rgb);
 #else
     vec3 color = triplanar(base, time);
 #endif

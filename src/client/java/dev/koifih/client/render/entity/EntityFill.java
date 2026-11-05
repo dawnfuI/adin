@@ -3,6 +3,8 @@ package dev.koifih.client.render.entity;
 import net.minecraft.world.phys.Vec3;
 
 public record EntityFill(int visible, int occluded, int visibleOverlay, int occludedOverlay, int light, int effect) {
+    public static final EntityFill GHOST = new EntityFill(0xFFFFFFFF, 0, 0, 0, 0, EntityFills.GHOST);
+
     private static final float ORIGIN_UNITS = 512f;
     private static final float SCALE_UNITS = 256f;
 
@@ -19,6 +21,10 @@ public record EntityFill(int visible, int occluded, int visibleOverlay, int occl
         int overlay = (wrapped(origin.x, ORIGIN_UNITS) & 0xFFFF) | (wrapped(origin.y, ORIGIN_UNITS) << 16);
         int light = (wrapped(origin.z, ORIGIN_UNITS) & 0xFFFF) | (fixed(scale, SCALE_UNITS) << 16);
         return new EntityFill(visible, occluded, overlay, overlay, light, effect);
+    }
+
+    public boolean ghost() {
+        return effect == EntityFills.GHOST;
     }
 
     public EntityFill anchored(Vec3 origin) {

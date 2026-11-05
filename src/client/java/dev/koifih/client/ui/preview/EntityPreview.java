@@ -6,6 +6,7 @@ import dev.koifih.client.render.Point;
 import dev.koifih.client.render.entity.EntityFill;
 import dev.koifih.client.render.entity.EntityOutline;
 import dev.koifih.client.render.entity.Filled;
+import dev.koifih.client.render.entity.Ghost;
 import dev.koifih.client.render.screen.Projector;
 import dev.koifih.client.util.Game;
 import lombok.AccessLevel;
@@ -113,8 +114,20 @@ public final class EntityPreview {
 
     public static boolean drawWalkingPlayer(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1, float sceneYawDegrees,
                                             PlayerSkin skin, float offsetX, float walkPos, float walkSpeed) {
+        return drawWalking(graphics, x0, y0, x1, y1, sceneYawDegrees, skin, offsetX, walkPos, walkSpeed, state -> {});
+    }
+
+    public static boolean drawWalkingGhost(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1, float sceneYawDegrees,
+                                           PlayerSkin skin, float offsetX, float walkPos, float walkSpeed) {
+        return drawWalking(graphics, x0, y0, x1, y1, sceneYawDegrees, skin, offsetX, walkPos, walkSpeed, Ghost::prepare);
+    }
+
+    private static boolean drawWalking(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1, float sceneYawDegrees,
+                                       PlayerSkin skin, float offsetX, float walkPos, float walkSpeed,
+                                       Consumer<EntityRenderState> adjust) {
         var player = player();
         return player != null && render(graphics, player, x0, y0, x1, y1, sceneYawDegrees, skin, null, null, offsetX, state -> {
+            adjust.accept(state);
             if (!(state instanceof LivingEntityRenderState living)) return;
             living.walkAnimationPos = walkPos;
             living.walkAnimationSpeed = walkSpeed;

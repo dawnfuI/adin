@@ -8,17 +8,16 @@ import dev.koifih.client.event.events.PacketProcessEvent;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.event.events.WorldRenderEvent;
 import dev.koifih.client.module.Module;
-import dev.koifih.client.render.Style;
+import dev.koifih.client.render.entity.Ghost;
 import dev.koifih.client.setting.BacktrackPreview;
 import dev.koifih.client.setting.BoolSetting;
 import dev.koifih.client.setting.EnumSetting;
 import dev.koifih.client.setting.Measure;
 import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.setting.TargetSettings;
-import dev.koifih.client.ui.Theme;
-import dev.koifih.client.util.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,19 +28,11 @@ public final class Backtrack extends Module {
     private static final String[] MODES = {"Delay", "Freeze"};
     private static final int MODE_DELAY = 0;
     private static final int MODE_FREEZE = 1;
-    private static final String[] VISUALIZE = {"Off", "Box", "Both"};
-    private static final int VISUALIZE_OFF = 0;
-    private static final int VISUALIZE_BOX = 1;
-    private static final int VISUALIZE_BOTH = 2;
     private static final long TRACKING_BUFFER_MILLIS = 500L;
     private static final long ATTACK_WINDOW_MILLIS = 1000L;
     private static final long MAX_FREEZE_MILLIS = 1000L;
     private static final int MIN_TICKS = 10;
     private static final int HURT_TIME = 3;
-    private static final float LINE_WIDTH = 2f;
-    private static final float OUTLINE_WIDTH = LINE_WIDTH + 2f;
-    private static final int OUTLINE_COLOR = 0xFF000000;
-    private static final float FILL_OPACITY = 0.2f;
     private static final float HALF_LIFE_TICKS = 2f;
     private static final double SETTLED_DISTANCE_SQR = 1.0E-4;
 
@@ -49,8 +40,8 @@ public final class Backtrack extends Module {
     private final SliderSetting delay = add(new SliderSetting("delay", 120, 0, 1000, Measure.MILLIS));
     private final BoolSetting pauseOnHurt = add(new BoolSetting("pauseOnHurt", false));
     private final TargetSettings targets = add(new TargetSettings());
-    private final EnumSetting visualize = add(new EnumSetting("visualize", VISUALIZE_BOX, VISUALIZE));
-    private final BacktrackPreview preview = add(new BacktrackPreview("preview", delay::get, this::frozen, this::style));
+    private final BoolSetting visualize = add(new BoolSetting("visualize", true));
+    private final BacktrackPreview preview = add(new BacktrackPreview("preview", delay::get, this::frozen));
 
     private final TrackedPosition tracked = new TrackedPosition();
     private LivingEntity target;
@@ -209,14 +200,8 @@ public final class Backtrack extends Module {
         return value * value;
     }
 
-    private Style style() {
-        int rgb = Colors.opaque(Theme.ACCENT);
-        Style style = Style.stroke(rgb, LINE_WIDTH).withOutline(OUTLINE_COLOR, OUTLINE_WIDTH);
-        return visualize.get() == VISUALIZE_BOTH ? style.withFill(Colors.withAlpha(rgb, FILL_OPACITY)) : style;
-    }
-
     private void onWorldRender(WorldRenderEvent event) {
-        if (visualize.get() == VISUALIZE_OFF) {
+        if (!visualize.get()) {
             shownFor = null;
             return;
         }
@@ -226,7 +211,8 @@ public final class Backtrack extends Module {
             shownFor = null;
             return;
         }
-        Vec3 displayed = entity.getPosition(event.deltaTracker().getGameTimeDeltaPartialTick(true));
+        float partialTick = event.deltaTracker().getGameTimeDeltaPartialTick(true);
+        Vec3 displayed = entity.getPosition(partialTick);
         Vec3 goal = lagging && entity == target ? tracked.get() : displayed;
         if (entity != shownFor) {
             shownFor = entity;
@@ -237,6 +223,10 @@ public final class Backtrack extends Module {
             shownFor = null;
             return;
         }
-        event.buffer().box(entity.getBoundingBox().move(shown.subtract(entity.position())), style());
+        EntityRenderState ghost = mc.getEntityRenderDispatcher().extractEntity(entity, partialTick);
+        ghost.x = shown.x;
+        ghost.y = shown.y;
+        ghost.z = shown.z;
+        Ghost.queue(ghost);
     }
 }

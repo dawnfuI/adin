@@ -15,6 +15,6 @@ public final class BoolSetting extends Setting<Boolean> {
 
     @Override
     public void load(JsonElement json) {
-        if (json != null && json.isJsonPrimitive()) value = json.getAsBoolean();
+        if (json != null && json.isJsonPrimitive() && json.getAsJsonPrimitive().isBoolean()) value = json.getAsBoolean();
     }
 }
