@@ -1,9 +1,6 @@
 package dev.koifih.client.backtrack;
 
 import dev.koifih.Adin;
-import dev.koifih.client.AdinClient;
-import dev.koifih.client.event.Priority;
-import dev.koifih.client.event.events.PacketProcessEvent;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -14,12 +11,16 @@ import net.minecraft.network.PacketListener;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
 import net.minecraft.network.protocol.common.ClientboundKeepAlivePacket;
+import net.minecraft.network.protocol.common.ClientboundPingPacket;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAnimatePacket;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
 import net.minecraft.network.protocol.game.ClientboundDisguisedChatPacket;
+import net.minecraft.network.protocol.game.ClientboundEntityEventPacket;
 import net.minecraft.network.protocol.game.ClientboundLoginPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundRemoveEntitiesPacket;
 import net.minecraft.network.protocol.game.ClientboundRespawnPacket;
 import net.minecraft.network.protocol.game.ClientboundSetHealthPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
@@ -27,6 +28,8 @@ import net.minecraft.network.protocol.game.ClientboundStartConfigurationPacket;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityEvent;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -70,9 +73,6 @@ public final class Backtracker {
     public static void init() {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> drop());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> drop());
-        AdinClient.EVENTS.subscribe(PacketProcessEvent.class, Priority.LOWEST, event -> {
-            if (!holding) releaseAll();
-        });
     }
 
     public static void hold(boolean hold) {
@@ -81,11 +81,6 @@ public final class Backtracker {
 
     public static boolean isLagging() {
         return !QUEUE.isEmpty();
-    }
-
-    public static long heldMillis() {
-        Held head = QUEUE.peek();
-        return head == null ? 0L : System.currentTimeMillis() - head.at;
     }
 
     public static Iterable<Held> held() {
@@ -109,8 +104,24 @@ public final class Backtracker {
                 || packet instanceof ClientboundSetHealthPacket health && health.getHealth() <= 0f;
     }
 
+    public static boolean removes(Packet<?> packet, Entity target) {
+        return switch (packet) {
+            case ClientboundEntityEventPacket event ->
+                    event.getEventId() == EntityEvent.DEATH && event.getEntity(target.level()) == target;
+            case ClientboundRemoveEntitiesPacket remove -> remove.getEntityIds().contains(target.getId());
+            case ClientboundBundlePacket bundle -> {
+                for (Packet<?> sub : bundle.subPackets()) {
+                    if (removes(sub, target)) yield true;
+                }
+                yield false;
+            }
+            default -> false;
+        };
+    }
+
     private static boolean immediate(Packet<?> packet) {
         return packet instanceof ClientboundKeepAlivePacket
+                || packet instanceof ClientboundPingPacket
                 || packet instanceof ClientboundDisconnectPacket
                 || packet instanceof ClientboundSystemChatPacket
                 || packet instanceof ClientboundPlayerChatPacket
@@ -158,6 +169,7 @@ public final class Backtracker {
     }
 
     public static void drop() {
+        holding = false;
         QUEUE.clear();
     }
 

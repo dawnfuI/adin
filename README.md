@@ -21,7 +21,6 @@ comes to skidding something, so I'll cut it short.
 - **timewarp** — inspiration for the GUI, as it is heavily based on theirs. I remade it from
   scratch, but better imo
 - **xuc22 (me)** — making the client
-- **Fable 5.1 / GPT-6 Astra / Opus 5** — pretty much coding everything
 - **Graphics** — minor contributions and moral support
 
 Keep in mind that this was made by an actual developer with real insight into how a client is

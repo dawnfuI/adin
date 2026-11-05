@@ -2,7 +2,7 @@ package dev.koifih.client.module.impl.combat;
 
 import dev.koifih.client.AdinClient;
 import dev.koifih.client.backtrack.Backtracker;
-import dev.koifih.client.backtrack.TrackedPosition;
+import dev.koifih.client.backtrack.TrackedEntity;
 import dev.koifih.client.event.events.AttackEvent;
 import dev.koifih.client.event.events.PacketProcessEvent;
 import dev.koifih.client.event.events.PreTickEvent;
@@ -15,7 +15,6 @@ import dev.koifih.client.setting.EnumSetting;
 import dev.koifih.client.setting.Measure;
 import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.setting.TargetSettings;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.network.protocol.Packet;
@@ -30,7 +29,6 @@ public final class Backtrack extends Module {
     private static final int MODE_FREEZE = 1;
     private static final long TRACKING_BUFFER_MILLIS = 500L;
     private static final long ATTACK_WINDOW_MILLIS = 1000L;
-    private static final long MAX_FREEZE_MILLIS = 1000L;
     private static final int MIN_TICKS = 10;
     private static final int HURT_TIME = 3;
     private static final float HALF_LIFE_TICKS = 2f;
@@ -43,7 +41,7 @@ public final class Backtrack extends Module {
     private final BoolSetting visualize = add(new BoolSetting("visualize", true));
     private final BacktrackPreview preview = add(new BacktrackPreview("preview", delay::get, this::frozen));
 
-    private final TrackedPosition tracked = new TrackedPosition();
+    private final TrackedEntity tracked = new TrackedEntity();
     private LivingEntity target;
     private long attackedAt;
     private long inRangeAt;
@@ -72,7 +70,7 @@ public final class Backtrack extends Module {
     @Override
     protected void onDisable() {
         Backtracker.hold(false);
-        reset();
+        release();
     }
 
     private boolean frozen() {
@@ -80,51 +78,63 @@ public final class Backtrack extends Module {
     }
 
     private void onPacketsProcessed(PacketProcessEvent event) {
-        Minecraft client = event.client();
-        LocalPlayer player = client.player;
-        if (client.level == null || player == null || client.getConnection() == null) {
-            Backtracker.drop();
+        LocalPlayer player = mc.player;
+        if (player == null || mc.level == null) {
             target = null;
-            Backtracker.hold(false);
+            Backtracker.drop();
             return;
         }
-        boolean hadHeld = Backtracker.isLagging();
-        if (target != null) scan(client, player);
-        if (holding(client, player)) {
-            if (!frozen()) Backtracker.release(delay.get());
-        } else if (hadHeld) {
-            reset();
-        }
-        sync(client, player);
+        if (target != null) scan(player);
+        if (!updateHold(player)) release();
+        else if (!frozen()) Backtracker.release(delay.get());
     }
 
-    private void scan(Minecraft client, LocalPlayer player) {
+    private void scan(LocalPlayer player) {
         for (Backtracker.Held held : Backtracker.held()) {
             if (held.scanned()) continue;
             held.markScanned();
             Packet<?> packet = held.packet();
-            if (Backtracker.forcesRelease(packet)) {
-                reset();
+            if (Backtracker.forcesRelease(packet) || Backtracker.removes(packet, target)) {
+                release();
                 return;
             }
-            Vec3 real = tracked.handle(packet, client.level, target);
+            Vec3 real = tracked.handle(packet, target);
             if (real != null && !frozen() && approaching(player, real)) Backtracker.releaseThrough(held);
         }
     }
 
     private void onAttack(AttackEvent event) {
         attackedAt = System.currentTimeMillis();
-        if (event.target() instanceof LivingEntity living) processTarget(mc, living);
-        sync(mc, mc.player);
+        if (event.target() instanceof LivingEntity living) acquire(mc.player, living);
+        updateHold(mc.player);
     }
 
     private void onTick(PreTickEvent event) {
-        Minecraft client = event.client();
-        LocalPlayer player = client.player;
-        if (client.level == null || player == null) return;
+        LocalPlayer player = mc.player;
+        if (player == null || mc.level == null) return;
         LivingEntity enemy = assisted(player);
-        if (enemy != null) processTarget(client, enemy);
-        sync(client, player);
+        if (enemy != null) acquire(player, enemy);
+        if (target != null) tracked.tick(target);
+        updateHold(player);
+    }
+
+    private void acquire(LocalPlayer player, LivingEntity enemy) {
+        if (enemy == target || (frozen() && target != null) || !shouldBacktrack(player, enemy)) return;
+        release();
+        tracked.syncTo(enemy);
+        target = enemy;
+    }
+
+    private boolean updateHold(LocalPlayer player) {
+        boolean holding = target != null && target.isAlive() && target.level() == mc.level
+                && (frozen() || shouldBacktrack(player, target));
+        Backtracker.hold(holding);
+        return holding;
+    }
+
+    private void release() {
+        Backtracker.releaseAll();
+        target = null;
     }
 
     private LivingEntity assisted(LocalPlayer player) {
@@ -141,38 +151,6 @@ public final class Backtrack extends Module {
 
     private static boolean reachable(LocalPlayer player, LivingEntity entity) {
         return boxedDistanceSqr(entity, entity.position(), player.getEyePosition()) <= square(player.entityInteractionRange());
-    }
-
-    private void processTarget(Minecraft client, LivingEntity enemy) {
-        LocalPlayer player = client.player;
-        if (player == null || (frozen() && target != null) || !shouldBacktrack(player, enemy)) return;
-        if (enemy != target) {
-            reset();
-            tracked.syncTo(enemy);
-        }
-        target = enemy;
-    }
-
-    private void reset() {
-        if (mc.player == null) return;
-
-        Backtracker.releaseAll();
-        target = null;
-    }
-
-    private void sync(Minecraft client, LocalPlayer player) {
-        Backtracker.hold(player != null && holding(client, player));
-    }
-
-    private boolean holding(Minecraft client, LocalPlayer player) {
-        if (target == null || !target.isAlive() || target.level() != client.level) return false;
-        if (!shouldBacktrack(player, target)) return false;
-        return !frozen() || freezing(player);
-    }
-
-    private boolean freezing(LocalPlayer player) {
-        return Backtracker.heldMillis() < MAX_FREEZE_MILLIS
-                && boxedDistanceSqr(target, tracked.get(), player.getEyePosition()) <= square(player.entityInteractionRange());
     }
 
     private boolean shouldBacktrack(LocalPlayer player, LivingEntity entity) {
@@ -201,25 +179,21 @@ public final class Backtrack extends Module {
     }
 
     private void onWorldRender(WorldRenderEvent event) {
-        if (!visualize.get()) {
-            shownFor = null;
-            return;
-        }
         boolean lagging = target != null && Backtracker.isLagging();
         LivingEntity entity = lagging ? target : shownFor;
-        if (entity == null || !entity.isAlive() || entity.level() != event.level()) {
+        if (!visualize.get() || entity == null || !entity.isAlive() || entity.level() != event.level()) {
             shownFor = null;
             return;
         }
         float partialTick = event.deltaTracker().getGameTimeDeltaPartialTick(true);
         Vec3 displayed = entity.getPosition(partialTick);
-        Vec3 goal = lagging && entity == target ? tracked.get() : displayed;
+        Vec3 goal = lagging ? tracked.position() : displayed;
         if (entity != shownFor) {
             shownFor = entity;
             shown = displayed;
         }
         shown = shown.lerp(goal, 1.0 - Math.pow(0.5, event.deltaTracker().getRealtimeDeltaTicks() / HALF_LIFE_TICKS));
-        if (goal == displayed && shown.distanceToSqr(displayed) < SETTLED_DISTANCE_SQR) {
+        if (!lagging && shown.distanceToSqr(displayed) < SETTLED_DISTANCE_SQR) {
             shownFor = null;
             return;
         }
@@ -227,6 +201,7 @@ public final class Backtrack extends Module {
         ghost.x = shown.x;
         ghost.y = shown.y;
         ghost.z = shown.z;
+        if (lagging) tracked.pose(ghost, partialTick);
         Ghost.queue(ghost);
     }
 }
