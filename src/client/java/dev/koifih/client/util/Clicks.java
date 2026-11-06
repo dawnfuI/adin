@@ -6,13 +6,18 @@ import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.mixin.accessor.KeyMappingAccessor;
 import dev.koifih.client.mixin.accessor.KeyboardHandlerAccessor;
 import dev.koifih.client.mixin.accessor.MouseHandlerAccessor;
+import dev.koifih.client.mixin.accessor.MultiPlayerGameModeAccessor;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonInfo;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -43,6 +48,18 @@ public final class Clicks {
 
     public static boolean right(Minecraft client) {
         return client.hitResult != null && client.hitResult.getType() == HitResult.Type.MISS && press(client, GLFW.GLFW_MOUSE_BUTTON_RIGHT);
+    }
+
+    public static void use(Minecraft client, boolean quiet) {
+        LocalPlayer player = client.player;
+        if (quiet) {
+            ((MultiPlayerGameModeAccessor) client.gameMode).adin$startPrediction(client.level,
+                    sequence -> new ServerboundUseItemPacket(InteractionHand.MAIN_HAND, sequence, player.getYRot(), player.getXRot()));
+            player.swing(InteractionHand.MAIN_HAND);
+        } else if (!right(client) && client.gameMode.useItem(player, InteractionHand.MAIN_HAND) instanceof InteractionResult.Success success) {
+            if (success.swingSource() == InteractionResult.SwingSource.CLIENT) player.swing(InteractionHand.MAIN_HAND);
+            client.gameRenderer.itemInHandRenderer.itemUsed(InteractionHand.MAIN_HAND);
+        }
     }
 
     public static boolean hotbar(Minecraft client, int slot) {

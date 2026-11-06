@@ -37,7 +37,7 @@ public final class ModuleManager {
             "Esp", "Nametags", "BlockEsp", "Capes", "WorldModifier",
             "Notifications", "ModuleList", "Watermark", "KeybindList",
             "AutoTotem", "Refill",
-            "KeyPearl",
+            "KeyPearl", "KeyPot",
             "Friends", "AntiBot");
 
     public ModuleManager() {
