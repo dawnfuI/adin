@@ -8,19 +8,18 @@ import dev.koifih.client.setting.HotbarSetting;
 import dev.koifih.client.setting.Measure;
 import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.util.Clicks;
+import dev.koifih.client.util.Effects;
 import dev.koifih.client.util.Hotbar;
 import dev.koifih.client.util.Time;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -145,16 +144,10 @@ public final class Refill extends Module {
 
     private boolean matches(ItemStack stack) {
         return switch (mode.get()) {
-            case POT -> isHealingPotion(stack);
+            case POT -> Effects.splash(stack, MobEffects.INSTANT_HEALTH);
             case BED -> stack.is(ItemTags.BEDS);
             case CART -> stack.is(Items.TNT_MINECART);
             default -> false;
         };
-    }
-
-    private static boolean isHealingPotion(ItemStack stack) {
-        if (!stack.is(Items.SPLASH_POTION)) return false;
-        PotionContents contents = stack.get(DataComponents.POTION_CONTENTS);
-        return contents != null && (contents.is(Potions.HEALING) || contents.is(Potions.STRONG_HEALING));
     }
 }
