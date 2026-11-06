@@ -14,6 +14,7 @@ public enum Category {
     RENDER("render", AdinIcon.RENDER),
     HUD("hud", AdinIcon.HUD),
     PLAYER("player", AdinIcon.PLAYER),
+    MACROS("macros", AdinIcon.MACROS),
     MISC("misc", AdinIcon.MISC);
 
     @Getter

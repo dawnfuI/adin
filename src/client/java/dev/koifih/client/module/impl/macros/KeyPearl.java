@@ -1,4 +1,4 @@
-package dev.koifih.client.module.impl.player;
+package dev.koifih.client.module.impl.macros;
 
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.setting.Measure;

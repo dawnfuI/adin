@@ -36,7 +36,8 @@ public final class ModuleManager {
             "Sprint", "SprintReset", "MoveFix", "JumpReset",
             "Esp", "Nametags", "BlockEsp", "Capes", "WorldModifier",
             "Notifications", "ModuleList", "Watermark", "KeybindList",
-            "KeyPearl", "AutoTotem", "Refill",
+            "AutoTotem", "Refill",
+            "KeyPearl",
             "Friends", "AntiBot");
 
     public ModuleManager() {
