@@ -14,15 +14,15 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 public final class WorldRenderTypes {
     private static final DepthStencilState SEE_THROUGH = new DepthStencilState(CompareOp.ALWAYS_PASS, false);
 
-    private static final RenderPipeline FILL_PIPELINE = RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
+    private static final RenderPipeline FILL_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.DEBUG_FILLED_SNIPPET)
             .withLocation(Adin.id("pipeline/world_fill"))
             .withDepthStencilState(SEE_THROUGH)
             .withCull(false)
-            .build();
-    private static final RenderPipeline LINES_PIPELINE = RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
+            .build());
+    private static final RenderPipeline LINES_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
             .withLocation(Adin.id("pipeline/world_lines"))
             .withDepthStencilState(SEE_THROUGH)
-            .build();
+            .build());
 
     public static final RenderType FILL = RenderType.create(Adin.MOD_ID + ":world_fill",
             RenderSetup.builder(FILL_PIPELINE).sortOnUpload().createRenderSetup());

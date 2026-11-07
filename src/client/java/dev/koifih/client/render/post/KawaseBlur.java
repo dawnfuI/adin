@@ -7,6 +7,7 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.shaders.UniformType;
@@ -32,7 +33,7 @@ public final class KawaseBlur {
     private static final BindGroupLayout CONFIG = BindGroupLayout.builder()
             .withUniform("KawaseConfig", UniformType.UNIFORM_BUFFER)
             .build();
-    private static final RenderPipeline PIPELINE = RenderPipeline.builder()
+    private static final RenderPipeline PIPELINE = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Adin.id("pipeline/post/kawase"))
             .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
             .withFragmentShader(Adin.id("post/kawase"))
@@ -40,7 +41,7 @@ public final class KawaseBlur {
             .withBindGroupLayout(CONFIG)
             .withColorTargetState(ColorTargetState.DEFAULT)
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-            .build();
+            .build());
 
     private final String name;
     private final GpuBuffer[] offsets = new GpuBuffer[MAX_PASSES + 1];

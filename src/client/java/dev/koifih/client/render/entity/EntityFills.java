@@ -7,6 +7,7 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import dev.koifih.Adin;
@@ -121,7 +122,7 @@ public final class EntityFills {
     }
 
     private static RenderPipeline pipeline(String name, int effect, ColorTargetState color, DepthStencilState depth, boolean hand) {
-        return RenderPipeline.builder()
+        return RenderPipelines.register(RenderPipeline.builder()
                 .withLocation(Adin.id("pipeline/fill_" + name))
                 .withVertexShader(Adin.id("core/fill"))
                 .withFragmentShader(Adin.id("core/fill"))
@@ -136,6 +137,6 @@ public final class EntityFills {
                 .withColorTargetState(color)
                 .withDepthStencilState(depth)
                 .withCull(false)
-                .build();
+                .build());
     }
 }

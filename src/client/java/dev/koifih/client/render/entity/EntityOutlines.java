@@ -10,6 +10,7 @@ import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.platform.BlendFactor;
@@ -205,7 +206,7 @@ public final class EntityOutlines {
 
     private static RenderPipeline pipeline(String fragmentShader, ColorTargetState color, BindGroupLayout samplers,
                                            BindGroupLayout uniforms) {
-        return RenderPipeline.builder()
+        return RenderPipelines.register(RenderPipeline.builder()
                 .withLocation(Adin.id("pipeline/post/" + fragmentShader))
                 .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
                 .withFragmentShader(Adin.id("post/" + fragmentShader))
@@ -213,6 +214,6 @@ public final class EntityOutlines {
                 .withBindGroupLayout(uniforms)
                 .withColorTargetState(color)
                 .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-                .build();
+                .build());
     }
 }

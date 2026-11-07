@@ -5,3 +5,4 @@
 - added new backtrack preview (credits astralis)
 - Added Automace
 - General code clean ups 
+- Fixed performance issues 

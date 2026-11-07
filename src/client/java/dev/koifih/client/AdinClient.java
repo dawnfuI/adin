@@ -10,6 +10,7 @@ import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.event.events.TickEvent;
 import dev.koifih.client.input.Keybinds;
 import dev.koifih.client.module.ModuleManager;
+import dev.koifih.client.render.Preload;
 import dev.koifih.client.render.screen.ScreenRenderer;
 import dev.koifih.client.render.blocks.BlockIndex;
 import dev.koifih.client.render.blocks.BlockRenderer;
@@ -28,6 +29,7 @@ public final class AdinClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        Preload.init();
         StateStore.init();
         Backtracker.init();
         Keybinds.register();

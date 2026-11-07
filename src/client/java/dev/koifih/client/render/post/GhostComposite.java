@@ -5,6 +5,7 @@ import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -61,7 +62,7 @@ public final class GhostComposite {
     }
 
     private static RenderPipeline pipeline(String name, ColorTargetState color, boolean separateMask) {
-        return RenderPipeline.builder()
+        return RenderPipelines.register(RenderPipeline.builder()
                 .withLocation(Adin.id("pipeline/post/ghost_" + name))
                 .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
                 .withFragmentShader(Adin.id("post/ghost"))
@@ -69,6 +70,6 @@ public final class GhostComposite {
                 .withBindGroupLayout(SAMPLERS)
                 .withColorTargetState(color)
                 .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-                .build();
+                .build());
     }
 }

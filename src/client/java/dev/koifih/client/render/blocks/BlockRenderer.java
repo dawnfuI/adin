@@ -12,6 +12,7 @@ import com.mojang.blaze3d.pipeline.BindGroupLayout;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import net.minecraft.client.renderer.RenderPipelines;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -90,7 +91,7 @@ public final class BlockRenderer {
     private static final BindGroupLayout BOX_ORIGINS = BindGroupLayout.builder()
             .withUniform("Origins", UniformType.TEXEL_BUFFER, GpuFormat.RGBA32_SINT)
             .build();
-    private static final RenderPipeline MARCH = RenderPipeline.builder()
+    private static final RenderPipeline MARCH = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Adin.id("pipeline/blocks_volume"))
             .withVertexShader(Identifier.fromNamespaceAndPath("minecraft", "core/screenquad"))
             .withFragmentShader(Adin.id("core/blocks_volume"))
@@ -99,8 +100,8 @@ public final class BlockRenderer {
             .withBindGroupLayout(MARCH_LOOKUP)
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-            .build();
-    private static final RenderPipeline BOX = RenderPipeline.builder()
+            .build());
+    private static final RenderPipeline BOX = RenderPipelines.register(RenderPipeline.builder()
             .withLocation(Adin.id("pipeline/blocks_box"))
             .withVertexShader(Adin.id("core/blocks_box"))
             .withFragmentShader(Adin.id("core/blocks_box"))
@@ -111,7 +112,7 @@ public final class BlockRenderer {
             .withCull(false)
             .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT_PREMULTIPLIED_ALPHA))
             .withPrimitiveTopology(PrimitiveTopology.TRIANGLES)
-            .build();
+            .build());
     private static final Matrix4f VIEW_PROJECTION = new Matrix4f();
     private static final Matrix4f INVERSE = new Matrix4f();
     private static final Vector3f FORWARD = new Vector3f();
