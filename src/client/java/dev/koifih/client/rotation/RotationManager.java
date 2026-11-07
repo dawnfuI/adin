@@ -33,6 +33,7 @@ public final class RotationManager {
     private Smoothing smoothing;
     private Rotator rotator;
     private Rotation lastSent = new Rotation(0f, 0f);
+    private boolean locked;
 
     public void init() {
         AdinClient.EVENTS.subscribe(TickEvent.class, Priority.LOWEST, this::onTick);
@@ -51,6 +52,7 @@ public final class RotationManager {
     public void face(LocalPlayer player, Rotation target, int priority, RotationConfig config) {
         if (request != null && priority < request.priority()) return;
         request = new Request(RotationTarget.fixed(target), priority, config);
+        if (locked) return;
         if (config.silent()) {
             current = distinct(quantized(lastSent.moved(lastSent.yawTo(target), lastSent.pitchTo(target))));
             return;
@@ -75,6 +77,10 @@ public final class RotationManager {
 
     public float sentPitch(float actual) {
         return current != null ? current.pitch() : actual;
+    }
+
+    public void lock() {
+        locked = true;
     }
 
     public void sent(Rotation rotation) {
@@ -148,6 +154,7 @@ public final class RotationManager {
         LocalPlayer player = event.client().player;
         Request request = this.request;
         this.request = null;
+        locked = false;
         visible = null;
         previous = current;
         if (player == null) {
