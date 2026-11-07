@@ -64,18 +64,17 @@ public final class Nametags extends Module {
     }
 
     private void onHudRender(HudRenderEvent event) {
-        Minecraft client = Minecraft.getInstance();
-        if (client.level == null || client.player == null) return;
+        if (mc.level == null || mc.player == null) return;
         Theme.update();
         Projection projection = Projection.capture();
-        Camera camera = client.gameRenderer.mainCamera();
+        Camera camera = mc.gameRenderer.mainCamera();
         List<Tag> tags = new ArrayList<>();
         double limit = (double) range.get() * range.get();
-        for (Entity entity : client.level.entitiesForRendering()) {
+        for (Entity entity : mc.level.entitiesForRendering()) {
             if (!(entity instanceof LivingEntity living) || !shows(living, camera)) continue;
             double distanceSq = entity.distanceToSqr(camera.position());
             if (distanceSq > limit) continue;
-            Vec3 head = head(living, event.deltaTracker(), client);
+            Vec3 head = head(living, event.deltaTracker());
             Point anchor = projection.project(head);
             if (anchor != null) tags.add(new Tag(living, anchor, Math.sqrt(distanceSq)));
         }
@@ -123,8 +122,8 @@ public final class Nametags extends Module {
         return fraction >= 0.5f ? Colors.lerp(HURT, HEALTHY, (fraction - 0.5f) * 2f) : Colors.lerp(DYING, HURT, fraction * 2f);
     }
 
-    private static Vec3 head(LivingEntity entity, DeltaTracker deltaTracker, Minecraft client) {
-        float partial = deltaTracker.getGameTimeDeltaPartialTick(!client.level.tickRateManager().isEntityFrozen(entity));
+    private static Vec3 head(LivingEntity entity, DeltaTracker deltaTracker) {
+        float partial = deltaTracker.getGameTimeDeltaPartialTick(!mc.level.tickRateManager().isEntityFrozen(entity));
         double x = Mth.lerp(partial, entity.xOld, entity.getX());
         double y = Mth.lerp(partial, entity.yOld, entity.getY());
         double z = Mth.lerp(partial, entity.zOld, entity.getZ());

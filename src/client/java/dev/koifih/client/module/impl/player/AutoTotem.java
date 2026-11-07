@@ -65,12 +65,12 @@ public final class AutoTotem extends Module {
 
     private void onPop(TotemPopEvent event) {
         if (step != Step.IDLE && step != Step.POPPED) return;
-        popped = event.client().player.getMainHandItem().is(Items.TOTEM_OF_UNDYING) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
+        popped = mc.player.getMainHandItem().is(Items.TOTEM_OF_UNDYING) ? InteractionHand.MAIN_HAND : InteractionHand.OFF_HAND;
         advance(Step.POPPED);
     }
 
     private void onTick(PreTickEvent event) {
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         if (player == null) {
             step = Step.IDLE;
             return;

@@ -11,7 +11,6 @@ import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Hotbar;
 import dev.koifih.client.util.Time;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.Entity;
@@ -41,18 +40,17 @@ public final class ShieldBreaker extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        Minecraft client = event.client();
-        LocalPlayer player = client.player;
+        LocalPlayer player = mc.player;
         if (originalSlot != Hotbar.NONE) {
             if (player == null || !switchBack.get() || sinceSwitch.elapsed(delay.get())) restore(player);
             return;
         }
-        if (!Game.playing(client) || player.isBlocking() || player.getAttackStrengthScale(0.5f) < 1f) return;
-        Player target = crosshairPlayer(client, player);
+        if (!Game.playing() || player.isBlocking() || player.getAttackStrengthScale(0.5f) < 1f) return;
+        Player target = crosshairPlayer(player);
         if (target == null) return;
         prepare(player, target);
         if (!player.getMainHandItem().is(ItemTags.AXES)) return;
-        if (!Clicks.left(client, target)) ((MinecraftAccessor) client).adin$startAttack();
+        if (!Clicks.left(mc, target)) ((MinecraftAccessor) mc).adin$startAttack();
     }
 
     public void prepare(LocalPlayer player, Entity target) {
@@ -80,8 +78,8 @@ public final class ShieldBreaker extends Module {
         return target.getViewVector(1f).multiply(1.0, 0.0, 1.0).dot(toPlayer) > 0.0;
     }
 
-    private static Player crosshairPlayer(Minecraft client, LocalPlayer player) {
-        if (!(client.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)) return null;
+    private static Player crosshairPlayer(LocalPlayer player) {
+        if (!(mc.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)) return null;
         return target != player && target.isAlive() && !target.isSpectator() && !FriendList.protects(target) ? target : null;
     }
 }

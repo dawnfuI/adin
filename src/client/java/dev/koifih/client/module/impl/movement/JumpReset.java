@@ -28,7 +28,7 @@ public final class JumpReset extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         release();
         if (player == null) return;
         boolean hurt = player.hurtTime > lastHurt;

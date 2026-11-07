@@ -5,7 +5,6 @@ import dev.koifih.client.setting.Measure;
 import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.module.Module;
-import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
 import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BoolSetting;
@@ -63,9 +62,9 @@ public final class AutoAnchor extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         if (player == null) return;
-        if (!Game.playing(mc) || Players.consuming(player)) {
+        if (!Game.playing() || Players.consuming(player)) {
             if (shield == null && anchor == null) idle(player);
             return;
         }
@@ -137,7 +136,7 @@ public final class AutoAnchor extends Module {
 
     private void aim(LocalPlayer player, BlockHitResult hit) {
         Vec3 point = hit.getLocation();
-        AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), Priority.HIGH, SNAP);
+        AdinClient.ROTATIONS.aim(player, point, Priority.HIGH, SNAP);
     }
 
     private boolean facing(LocalPlayer player, BlockHitResult hit) {

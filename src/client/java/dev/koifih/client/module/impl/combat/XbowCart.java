@@ -7,9 +7,8 @@ import dev.koifih.client.mixin.accessor.MultiPlayerGameModeAccessor;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.module.impl.hud.Notifications;
 import dev.koifih.client.rotation.ManualAim;
-import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
-import dev.koifih.client.rotation.Smoothing;
+import dev.koifih.client.rotation.RotationMode;
 import dev.koifih.client.setting.BoolSetting;
 import dev.koifih.client.setting.EnumSetting;
 import dev.koifih.client.setting.Measure;
@@ -41,12 +40,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.function.Predicate;
 
 public final class XbowCart extends Module {
-    private static final String[] MODES = {"Manual", "Auto", "Silent"};
-    private static final int MANUAL = 0;
-    private static final int AUTO = 1;
-    private static final int SILENT = 2;
-    private static final RotationConfig AUTO_AIM = RotationConfig.visible(0f, Smoothing.EASE_OUT_CUBIC);
-    private static final RotationConfig SILENT_AIM = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
     private static final int MAX_RAIL_DROP = 2;
     private static final long TIMEOUT_MILLIS = 2000;
     private static final long MANUAL_TIMEOUT_MILLIS = 8000;
@@ -63,7 +56,7 @@ public final class XbowCart extends Module {
 
     private enum Stage { IDLE, RAIL, CART, FIRE, SHOOT }
 
-    private final EnumSetting rotation = add(new EnumSetting("rotation", AUTO, MODES));
+    private final EnumSetting rotation = add(new EnumSetting("rotation", RotationMode.AUTO, RotationMode.NAMES));
     private final SliderSetting delay = add(new SliderSetting("delay", 50, 50, 500, Measure.MILLIS));
     private final BoolSetting silentSwap = add(new BoolSetting("silentSwap", false));
     private final BoolSetting swapBack = add(new BoolSetting("swapBack", true));
@@ -103,7 +96,7 @@ public final class XbowCart extends Module {
     @Override
     protected void onActivate() {
         LocalPlayer player = mc.player;
-        if (stage != Stage.IDLE || !Game.playing(mc)) return;
+        if (stage != Stage.IDLE || !Game.playing()) return;
         if (Hotbar.find(player, CHARGED) == Hotbar.NONE) {
             if (Hotbar.find(player, CROSSBOW) != Hotbar.NONE) {
                 AdinClient.MODULES.get(Notifications.class).alert(this, Lang.get("xbowCart.uncharged"));
@@ -117,12 +110,12 @@ public final class XbowCart extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         if (stage == Stage.IDLE) {
             if (slots.swapped() && pacer.ready()) slots.restore(player, swapBack.get());
             return;
         }
-        if (player == null || !Game.playing(mc) || sinceStart.elapsed(manual() ? MANUAL_TIMEOUT_MILLIS : TIMEOUT_MILLIS)) {
+        if (player == null || !Game.playing() || sinceStart.elapsed(manual() ? MANUAL_TIMEOUT_MILLIS : TIMEOUT_MILLIS)) {
             stop(player);
             return;
         }
@@ -289,19 +282,19 @@ public final class XbowCart extends Module {
 
     private void aim(LocalPlayer player, Vec3 point) {
         if (manual()) return;
-        AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), Priority.HIGH, config());
+        AdinClient.ROTATIONS.aim(player, point, Priority.HIGH, config());
     }
 
     private void face(LocalPlayer player, Vec3 point) {
-        if (!manual()) AdinClient.ROTATIONS.face(player, Rotation.toward(player.getEyePosition(), point), Priority.HIGH, config());
+        if (!manual()) AdinClient.ROTATIONS.face(player, point, Priority.HIGH, config());
     }
 
     private RotationConfig config() {
-        return rotation.get() == SILENT ? SILENT_AIM : AUTO_AIM;
+        return RotationMode.config(rotation.get());
     }
 
     private boolean manual() {
-        return rotation.get() == MANUAL;
+        return rotation.get() == RotationMode.MANUAL;
     }
 
     private MinecartTNT tntCart() {

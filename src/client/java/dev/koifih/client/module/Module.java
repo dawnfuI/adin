@@ -123,8 +123,8 @@ public abstract class Module {
         subscriptions.add(AdinClient.EVENTS.subscribe(type, priority, listener));
     }
 
-    void tickKeybind(Minecraft client) {
-        boolean down = key != InputConstants.UNKNOWN && client.gui.screen() == null && isKeyDown(client.getWindow().handle(), key);
+    void tickKeybind() {
+        boolean down = key != InputConstants.UNKNOWN && mc.gui.screen() == null && isKeyDown(mc.getWindow().handle(), key);
         if (activatable()) {
             if (enabled) {
                 if (down && !keyWasDown) onActivate();

@@ -7,7 +7,6 @@ import dev.koifih.client.config.State;
 import dev.koifih.client.setting.Setting;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.client.Minecraft;
 import java.io.IOException;
 import java.lang.reflect.Modifier;
 import java.nio.file.Files;
@@ -32,7 +31,7 @@ public final class ModuleManager {
 
     private static final String IMPL = "dev/koifih/client/module/impl";
     private static final List<String> ORDER = List.of(
-            "AimAssist", "Triggerbot", "ShieldBreaker", "AutoHitCrystal", "AutoCrystal", "AutoAnchor", "AutoCart", "XbowCart", "Backtrack",
+            "AimAssist", "Triggerbot", "ShieldBreaker", "AutoMace", "AutoHitCrystal", "AutoCrystal", "AutoAnchor", "AutoCart", "XbowCart", "Backtrack",
             "Sprint", "SprintReset", "MoveFix", "JumpReset",
             "Esp", "Nametags", "BlockEsp", "Capes", "WorldModifier",
             "Notifications", "ModuleList", "Watermark", "KeybindList",
@@ -135,8 +134,8 @@ public final class ModuleManager {
         return module != null && module.isEnabled();
     }
 
-    public void tickKeybinds(Minecraft client) {
-        for (Module module : modules) module.tickKeybind(client);
+    public void tickKeybinds() {
+        for (Module module : modules) module.tickKeybind();
     }
 
     public boolean activates(InputConstants.Key key) {

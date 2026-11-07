@@ -9,7 +9,6 @@ import dev.koifih.client.setting.EnumSetting;
 import dev.koifih.client.setting.Measure;
 import dev.koifih.client.setting.MultiSetting;
 import dev.koifih.client.setting.SliderSetting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -91,9 +90,8 @@ public final class AntiBot extends Module {
     }
 
     private void onTick(TickEvent event) {
-        Minecraft client = event.client();
-        ClientLevel level = client.level;
-        LocalPlayer self = client.player;
+        ClientLevel level = mc.level;
+        LocalPlayer self = mc.player;
         if (level == null || self == null) {
             forget();
             return;
@@ -109,16 +107,16 @@ public final class AntiBot extends Module {
         tracked.keySet().retainAll(present);
         bots.clear();
         for (AbstractClientPlayer player : players) {
-            if (player != self && detect(client, player, names)) bots.add(player.getId());
+            if (player != self && detect(player, names)) bots.add(player.getId());
         }
     }
 
-    private boolean detect(Minecraft client, Player player, Map<String, Integer> names) {
+    private boolean detect(Player player, Map<String, Integer> names) {
         int id = player.getId();
         if (uses(ENTITY_ID) && (id < 0 || id > MAX_ENTITY_ID)) return true;
         if (uses(PITCH) && Math.abs(player.getXRot()) > MAX_PITCH) return true;
         if (uses(OFFLINE_UUID) && player.getUUID().version() != ONLINE_UUID_VERSION) return true;
-        if (uses(TAB_LIST) && !listed(client, player.getUUID())) return true;
+        if (uses(TAB_LIST) && !listed(player.getUUID())) return true;
         if (uses(DUPLICATE_NAME) && names.getOrDefault(name(player), 0) > 1) return true;
         Track track = tracked.get(id);
         if (track == null || player.tickCount < grace.get()) return false;
@@ -131,8 +129,8 @@ public final class AntiBot extends Module {
         bots.clear();
     }
 
-    private static boolean listed(Minecraft client, UUID id) {
-        ClientPacketListener connection = client.getConnection();
+    private static boolean listed(UUID id) {
+        ClientPacketListener connection = mc.getConnection();
         return connection == null || connection.getPlayerInfo(id) != null;
     }
 

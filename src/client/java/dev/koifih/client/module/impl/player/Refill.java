@@ -62,8 +62,8 @@ public final class Refill extends Module {
     }
 
     private void onMove(MouseMoveEvent event) {
-        LocalPlayer player = event.client().player;
-        if (player == null || !(event.client().gui.screen() instanceof AbstractContainerScreen<?> screen)) {
+        LocalPlayer player = mc.player;
+        if (player == null || !(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) {
             lastScreen = null;
             return;
         }

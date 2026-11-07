@@ -18,7 +18,6 @@ import dev.koifih.client.setting.TargetSettings;
 import dev.koifih.client.util.Entities;
 import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Maths;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -80,8 +79,8 @@ public final class AimAssist extends Module {
     private void onTick(TickEvent event) {
         targeting = false;
         current = null;
-        if (onHold.get() && !event.client().options.keyAttack.isDown()) return;
-        Aim aim = aim(event.client());
+        if (onHold.get() && !mc.options.keyAttack.isDown()) return;
+        Aim aim = aim();
         if (aim == null) return;
         targeting = true;
         current = aim.entity();
@@ -92,9 +91,9 @@ public final class AimAssist extends Module {
         AdinClient.ROTATIONS.aim(aim, Priority.NORMAL, config);
     }
 
-    private Aim aim(Minecraft client) {
-        LocalPlayer player = client.player;
-        if (!Game.playing(client)) return null;
+    private Aim aim() {
+        LocalPlayer player = mc.player;
+        if (!Game.playing()) return null;
         if (weaponsOnly.get() && !Entities.holdsWeapon(player)) return null;
         Aim best = null;
         double bestScore = Double.MAX_VALUE;

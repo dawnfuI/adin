@@ -3,6 +3,7 @@ package dev.koifih.client.util;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -26,6 +27,10 @@ public final class Maths {
         float result = first;
         for (float value : rest) result = Math.min(result, value);
         return result;
+    }
+
+    public static Vec3 nearest(AABB box, Vec3 point) {
+        return new Vec3(Mth.clamp(point.x, box.minX, box.maxX), Mth.clamp(point.y, box.minY, box.maxY), Mth.clamp(point.z, box.minZ, box.maxZ));
     }
 
     public static double angle(Vec3 first, Vec3 second) {

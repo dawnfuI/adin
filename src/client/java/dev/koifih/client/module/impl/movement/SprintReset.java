@@ -57,7 +57,7 @@ public final class SprintReset extends Module {
 
     private void onTick(PreTickEvent event) {
         if (!resetting) return;
-        if (!Game.playing(event.client()) || stopwatch.elapsed(interval.get())) {
+        if (!Game.playing() || stopwatch.elapsed(interval.get())) {
             stop();
             return;
         }

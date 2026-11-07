@@ -57,7 +57,7 @@ public final class KeyPot extends Module {
     @Override
     protected void onActivate() {
         LocalPlayer player = mc.player;
-        if (!Game.playing(mc) || !pending.isEmpty()) return;
+        if (!Game.playing() || !pending.isEmpty()) return;
         queue(player, MobEffects.INSTANT_HEALTH);
         for (Holder<MobEffect> buff : BUFFS) {
             if (!player.hasEffect(buff)) queue(player, buff);
@@ -66,8 +66,8 @@ public final class KeyPot extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        if (!Game.playing(event.client())) pending.clear();
-        if (sinceThrow.elapsed(delay.get())) step(event.client().player);
+        if (!Game.playing()) pending.clear();
+        if (sinceThrow.elapsed(delay.get())) step(mc.player);
     }
 
     private void queue(LocalPlayer player, Holder<MobEffect> effect) {

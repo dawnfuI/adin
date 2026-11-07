@@ -58,7 +58,7 @@ public final class AutoHitCrystal extends Module {
     @Override
     protected void onActivate() {
         LocalPlayer player = mc.player;
-        if (!Game.playing(mc) || Players.consuming(player) || !(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
+        if (!Game.playing() || Players.consuming(player) || !(mc.hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) return;
         BlockState target = mc.level.getBlockState(hit.getBlockPos());
         if (target.is(Blocks.OBSIDIAN) || target.is(Blocks.BEDROCK)) return;
         int selected = Hotbar.selected(player);
@@ -106,7 +106,7 @@ public final class AutoHitCrystal extends Module {
             silent = false;
             return;
         }
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         if (player == null || (!silent && !swapBack.get()) || sinceSwap.elapsed(delay.get())) restore(player);
     }
 

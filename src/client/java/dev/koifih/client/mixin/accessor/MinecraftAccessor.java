@@ -8,4 +8,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 public interface MinecraftAccessor {
     @Invoker("startAttack")
     boolean adin$startAttack();
+
+    @Invoker("pick")
+    void adin$pick(float partialTicks);
 }

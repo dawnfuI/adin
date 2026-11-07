@@ -43,7 +43,7 @@ public final class KeyPearl extends Module {
     @Override
     protected void onActivate() {
         LocalPlayer player = mc.player;
-        if (!Game.playing(mc) || player.isUsingItem()) return;
+        if (!Game.playing() || player.isUsingItem()) return;
         int slot = player.getMainHandItem().is(Items.ENDER_PEARL) ? Hotbar.selected(player) : Hotbar.find(player, stack -> stack.is(Items.ENDER_PEARL));
         if (slot == Hotbar.NONE || player.getCooldowns().isOnCooldown(player.getInventory().getItem(slot))) return;
         if (!slots.select(player, slot, silentSwap.get())) return;
@@ -52,6 +52,6 @@ public final class KeyPearl extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        if (sinceThrow.elapsed(delay.get())) slots.restore(event.client().player, swapBack.get());
+        if (sinceThrow.elapsed(delay.get())) slots.restore(mc.player, swapBack.get());
     }
 }

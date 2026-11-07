@@ -12,7 +12,6 @@ import dev.koifih.client.util.Entities;
 import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Maths;
 import dev.koifih.client.util.Players;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
@@ -74,36 +73,35 @@ public final class Triggerbot extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        Minecraft client = event.client();
-        LocalPlayer player = client.player;
+        LocalPlayer player = mc.player;
         if (player == null) {
             current = null;
             overcharge = 0;
             holdingSprint = false;
             return;
         }
-        LivingEntity target = armed(client, player) ? crosshairTarget(client, player) : null;
+        LivingEntity target = armed(player) ? crosshairTarget(player) : null;
         current = target;
         overcharge = player.getAttackStrengthScale(0f) >= 1f ? overcharge + 1 : 0;
         if (target == null) {
             holdingSprint = false;
             return;
         }
-        if (crits.get() && !critReady(client, player)) return;
+        if (crits.get() && !critReady(player)) return;
         if (!charged(player, 0.5f)) return;
         AdinClient.MODULES.get(ShieldBreaker.class).prepare(player, target);
-        if (!Clicks.left(client, target)) {
-            client.gameMode.attack(player, target);
+        if (!Clicks.left(mc, target)) {
+            mc.gameMode.attack(player, target);
             player.swing(InteractionHand.MAIN_HAND);
         }
         holdingSprint = false;
         rearm();
     }
 
-    private boolean critReady(Minecraft client, LocalPlayer player) {
+    private boolean critReady(LocalPlayer player) {
         if (player.onGround()) {
             holdingSprint = false;
-            return !client.options.keyJump.isDown() && player.getDeltaMovement().y <= 0.0;
+            return !mc.options.keyJump.isDown() && player.getDeltaMovement().y <= 0.0;
         }
         if (!Players.canCrit(player)) {
             if (player.fallDistance <= 0.0 && peaking(player) && charged(player, CHARGE_LOOKAHEAD_TICKS)) dropSprint(player);
@@ -132,8 +130,8 @@ public final class Triggerbot extends Module {
         overcharge = 0;
     }
 
-    private boolean armed(Minecraft client, LocalPlayer player) {
-        return Game.playing(client) && !player.isUsingItem() && (!weaponsOnly.get() || Entities.holdsWeapon(player));
+    private boolean armed(LocalPlayer player) {
+        return Game.playing() && !player.isUsingItem() && (!weaponsOnly.get() || Entities.holdsWeapon(player));
     }
 
     private static boolean peaking(LocalPlayer player) {
@@ -142,8 +140,8 @@ public final class Triggerbot extends Module {
     }
 
 
-    private LivingEntity crosshairTarget(Minecraft client, LocalPlayer player) {
-        if (!(client.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity entity)) return null;
+    private LivingEntity crosshairTarget(LocalPlayer player) {
+        if (!(mc.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity entity)) return null;
         return targets.accepts(player, entity) && withinReach(player, hit.getLocation()) ? entity : null;
     }
 

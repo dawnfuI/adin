@@ -49,6 +49,14 @@ public final class RotationManager {
         aim(RotationTarget.fixed(target), priority, config);
     }
 
+    public void aim(LocalPlayer player, Vec3 point, int priority, RotationConfig config) {
+        aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), priority, config);
+    }
+
+    public void face(LocalPlayer player, Vec3 point, int priority, RotationConfig config) {
+        face(player, Rotation.toward(player.getEyePosition(), point), priority, config);
+    }
+
     public void face(LocalPlayer player, Rotation target, int priority, RotationConfig config) {
         if (request != null && priority < request.priority()) return;
         request = new Request(RotationTarget.fixed(target), priority, config);

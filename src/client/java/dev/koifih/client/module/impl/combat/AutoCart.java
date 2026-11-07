@@ -4,7 +4,6 @@ import dev.koifih.client.AdinClient;
 import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.module.Module;
-import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
 import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BoolSetting;
@@ -113,13 +112,13 @@ public final class AutoCart extends Module {
     }
 
     private void onTick(PreTickEvent event) {
-        LocalPlayer player = event.client().player;
+        LocalPlayer player = mc.player;
         if (player == null) {
             stage = Stage.IDLE;
             return;
         }
         if (stage == Stage.IDLE) {
-            AbstractArrow arrow = Game.playing(mc) && holdsFlameBow(player) ? firedArrow(player) : null;
+            AbstractArrow arrow = Game.playing() && holdsFlameBow(player) ? firedArrow(player) : null;
             if (!pacer.ready()) return;
             slots.restore(player, swapBack.get());
             if (arrow != null) {
@@ -128,7 +127,7 @@ public final class AutoCart extends Module {
             }
             return;
         }
-        if (!Game.playing(mc) || !flying(tracked)) {
+        if (!Game.playing() || !flying(tracked)) {
             stop(player);
             return;
         }
@@ -164,7 +163,7 @@ public final class AutoCart extends Module {
         RotationConfig config = mode.get() == SILENT
                 ? RotationConfig.silent(smoothness.get() / 100f, smoothing)
                 : RotationConfig.visible(smoothness.get() / 100f, smoothing);
-        AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), Priority.HIGH, config);
+        AdinClient.ROTATIONS.aim(player, point, Priority.HIGH, config);
         if (!pacer.ready()) return false;
         Vec3 eye = player.getEyePosition();
         Vec3 look = AdinClient.ROTATIONS.rotation(player).direction();

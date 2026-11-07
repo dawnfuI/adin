@@ -7,7 +7,6 @@ import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.mixin.accessor.MultiPlayerGameModeAccessor;
 import dev.koifih.client.module.Module;
-import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
 import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BoolSetting;
@@ -64,7 +63,7 @@ public final class AutoCrystal extends Module {
     @Override
     protected void onEnable() {
         listen(PreTickEvent.class, event -> {
-            if (releasing) restore(event.client().player);
+            if (releasing) restore(mc.player);
         });
     }
 
@@ -77,7 +76,7 @@ public final class AutoCrystal extends Module {
     @Override
     protected void onHold() {
         LocalPlayer player = mc.player;
-        if (!Game.playing(mc) || Players.consuming(player)) return;
+        if (!Game.playing() || Players.consuming(player)) return;
         releasing = false;
         if (antiSuicide.get() && !player.onGround()) return;
         if (headBob.get()) {
@@ -132,7 +131,7 @@ public final class AutoCrystal extends Module {
             next = center;
         }
         Vec3 target = next;
-        AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), target), Priority.HIGH, SNAP);
+        AdinClient.ROTATIONS.aim(player, target, Priority.HIGH, SNAP);
     }
 
     private BlockPos crosshairBase(LocalPlayer player) {

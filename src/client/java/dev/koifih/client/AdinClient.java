@@ -38,7 +38,7 @@ public final class AdinClient implements ClientModInitializer {
         BlockRenderer.init();
         ScreenRenderer.init();
         EVENTS.subscribe(PreTickEvent.class, Priority.HIGHEST, event -> Time.tick());
-        EVENTS.subscribe(PreTickEvent.class, event -> MODULES.tickKeybinds(event.client()));
+        EVENTS.subscribe(PreTickEvent.class, event -> MODULES.tickKeybinds());
         ClientTickEvents.START_CLIENT_TICK.register(client -> EVENTS.post(new PreTickEvent(client)));
         ClientTickEvents.END_CLIENT_TICK.register(client -> EVENTS.post(new TickEvent(client)));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EntityPreview.clear());

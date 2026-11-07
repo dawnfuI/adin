@@ -10,7 +10,6 @@ import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.event.events.WorldRenderEvent;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.render.entity.Ghost;
-import dev.koifih.client.rotation.Rotation;
 import dev.koifih.client.rotation.RotationConfig;
 import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BacktrackPreview;
@@ -124,7 +123,7 @@ public final class Backtrack extends Module {
         updateHold(player);
         if (frozen() && target != null && Backtracker.isLagging()) {
             Vec3 point = tracked.position().add(0, target.getBbHeight() * 0.5, 0);
-            AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), Priority.HIGH, SNAP);
+            AdinClient.ROTATIONS.aim(player, point, Priority.HIGH, SNAP);
         }
     }
 
