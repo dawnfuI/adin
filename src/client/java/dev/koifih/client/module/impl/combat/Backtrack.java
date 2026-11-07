@@ -3,12 +3,16 @@ package dev.koifih.client.module.impl.combat;
 import dev.koifih.client.AdinClient;
 import dev.koifih.client.backtrack.Backtracker;
 import dev.koifih.client.backtrack.TrackedEntity;
+import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.AttackEvent;
 import dev.koifih.client.event.events.PacketProcessEvent;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.event.events.WorldRenderEvent;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.render.entity.Ghost;
+import dev.koifih.client.rotation.Rotation;
+import dev.koifih.client.rotation.RotationConfig;
+import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BacktrackPreview;
 import dev.koifih.client.setting.BoolSetting;
 import dev.koifih.client.setting.EnumSetting;
@@ -29,6 +33,8 @@ public final class Backtrack extends Module {
     private static final int MODE_FREEZE = 1;
     private static final long TRACKING_BUFFER_MILLIS = 500L;
     private static final long ATTACK_WINDOW_MILLIS = 1000L;
+    private static final long MAX_FREEZE_MILLIS = 1000L;
+    private static final RotationConfig SNAP = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
     private static final int MIN_TICKS = 10;
     private static final int HURT_TIME = 3;
     private static final float HALF_LIFE_TICKS = 2f;
@@ -116,6 +122,10 @@ public final class Backtrack extends Module {
         if (enemy != null) acquire(player, enemy);
         if (target != null) tracked.tick(target);
         updateHold(player);
+        if (frozen() && target != null && Backtracker.isLagging()) {
+            Vec3 point = tracked.position().add(0, target.getBbHeight() * 0.5, 0);
+            AdinClient.ROTATIONS.aim(partialTick -> Rotation.toward(player.getEyePosition(partialTick), point), Priority.HIGH, SNAP);
+        }
     }
 
     private void acquire(LocalPlayer player, LivingEntity enemy) {
@@ -127,9 +137,23 @@ public final class Backtrack extends Module {
 
     private boolean updateHold(LocalPlayer player) {
         boolean holding = target != null && target.isAlive() && target.level() == mc.level
-                && (frozen() || shouldBacktrack(player, target));
+                && (frozen() ? freezing(player) : shouldBacktrack(player, target));
         Backtracker.hold(holding);
         return holding;
+    }
+
+    private boolean freezing(LocalPlayer player) {
+        return Backtracker.heldMillis() < MAX_FREEZE_MILLIS && withinReach(player);
+    }
+
+    public boolean permits(Entity attacked) {
+        if (!isEnabled() || !frozen() || target == null || attacked != target) return true;
+        LocalPlayer player = mc.player;
+        return player == null || withinReach(player);
+    }
+
+    private boolean withinReach(LocalPlayer player) {
+        return reachDistanceSqr(target, tracked.position(), player.getEyePosition()) <= square(player.entityInteractionRange());
     }
 
     private void release() {
@@ -172,6 +196,10 @@ public final class Backtrack extends Module {
     private static double boxedDistanceSqr(Entity entity, Vec3 at, Vec3 from) {
         AABB box = entity.getBoundingBox().inflate(entity.getPickRadius());
         return box.move(at.subtract(entity.position())).distanceToSqr(from);
+    }
+
+    private static double reachDistanceSqr(Entity entity, Vec3 at, Vec3 from) {
+        return entity.getBoundingBox().move(at.subtract(entity.position())).distanceToSqr(from);
     }
 
     private static double square(double value) {
