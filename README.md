@@ -1,13 +1,13 @@
-# Adin.lol
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/assets/banner-dark.png">
+    <img src=".github/assets/banner-light.png" alt="adin.lol" width="560">
+  </picture>
+</p>
 
 ---
 
-**adin.lol**
-
-This was originally meant to be a base, just to see how well Fable / Opus could make a client,
-and it came to be a bit more than I expected since I was having a ton of fun with it. So,
-therefore, enjoy the client. I think it is a good client, and probably the better option when it
-comes to skidding something, so I'll cut it short.
+Adin was originally designed to be a base or a mini project that i planned to do with AI Models but it turned into something bigger which that bigger thing is a client that is simple and functional the purpose for this client now is to provide a using experience and a learning experience. Since most clients that come out nowadays are Slop infested with shitty features buzz words "Engine" "Quantum" (if i hear another one of these phrases I'm gonna crash out) and some "AI Sword" some examples being Apexx client Mochi client Bloom Client Corz Client just to name a few i decided to make a client that is easy to skid because when you try and learn or paste of these clients there modules are either really poorly engineered kinda work ban on grim or js dont work at all. All adins features are designed to be only the core functionality with maybe a few misc settings and for it to be the easiest solution to how different things are done so you might be able to actually learn something or atleast skid something half decent because the modules in adin are designed to be high quality if you dont believe me try it for ur self
 
 ## Things worth skidding
 
@@ -40,3 +40,5 @@ cd adin
 ```
 
 Thank you, and please enjoy :3
+
+> "Your client can't be reversed. If its Open Source"
