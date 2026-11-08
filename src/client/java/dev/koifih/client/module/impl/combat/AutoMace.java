@@ -17,6 +17,7 @@ import dev.koifih.client.util.Clicks;
 import dev.koifih.client.util.Game;
 import dev.koifih.client.util.Hotbar;
 import dev.koifih.client.util.Maths;
+import dev.koifih.client.util.Players;
 import dev.koifih.client.util.SlotSwap;
 import dev.koifih.client.util.Time;
 import java.util.Comparator;
@@ -86,7 +87,7 @@ public final class AutoMace extends Module {
         if (!ready(player) || player.getAttackStrengthScale(0.5f) < 1f || !sinceSmash.elapsed(SMASH_GAP_MILLIS)) return;
         Player target = rotation.get() == RotationMode.MANUAL ? crosshairPlayer() : nearestPlayer(player);
         if (target == null || Hotbar.find(player, MACE) == Hotbar.NONE) return;
-        boolean stun = stunSlam.get() && shields(target, player) && swap(player, AXE);
+        boolean stun = stunSlam.get() && Players.shieldBlocks(target, player.position()) && swap(player, AXE);
         if (!stun && !swap(player, MACE)) return;
         strike(player, target);
         if (stun) stunned = target;
@@ -130,11 +131,6 @@ public final class AutoMace extends Module {
 
     private static Vec3 aimPoint(LocalPlayer player, Player target) {
         return Maths.nearest(target.getBoundingBox().deflate(AIM_INSET), player.getEyePosition());
-    }
-
-    private static boolean shields(Player target, LocalPlayer player) {
-        Vec3 view = target.calculateViewVector(0f, target.getYHeadRot());
-        return target.isBlocking() && player.position().subtract(target.position()).horizontal().normalize().dot(view) >= 0;
     }
 
     private static boolean ready(LocalPlayer player) {
