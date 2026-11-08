@@ -20,7 +20,6 @@ import net.minecraft.world.phys.Vec3;
 
 public final class Triggerbot extends Module {
     private static final float CHARGE_LOOKAHEAD_TICKS = 1.5f;
-    private static final double GRAVITY = 0.08;
     private static final double DRAG = 0.98;
     private static final int FULL_CHARGE = 100;
     private static final int EXTRA_CHARGE = 125;
@@ -136,12 +135,11 @@ public final class Triggerbot extends Module {
 
     private static boolean peaking(LocalPlayer player) {
         double rise = player.getDeltaMovement().y;
-        return rise > 0.0 && (rise - GRAVITY) * DRAG <= 0.0;
+        return rise > 0.0 && (rise - player.getGravity()) * DRAG <= 0.0;
     }
 
-
     private LivingEntity crosshairTarget(LocalPlayer player) {
-        if (!(mc.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity entity)) return null;
+        if (!(Game.crosshair() instanceof EntityHitResult hit) || !(hit.getEntity() instanceof LivingEntity entity)) return null;
         return targets.accepts(player, entity) && withinReach(player, hit.getLocation()) ? entity : null;
     }
 

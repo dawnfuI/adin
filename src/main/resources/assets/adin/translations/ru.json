@@ -107,6 +107,7 @@
   "setting.shieldBreaker.delay": "Задержка",
   "setting.shieldBreaker.facing": "Смотрит на вас",
   "setting.shieldBreaker.switchBack": "Переключиться обратно",
+  "setting.shieldBreaker.stun": "Stun",
   "module.autoMace": "Auto Mace",
   "module.autoMace.description": "Берёт булаву и бьёт игрока в прицеле, когда ты падаешь",
   "setting.autoMace.stunSlam": "Stun slam",

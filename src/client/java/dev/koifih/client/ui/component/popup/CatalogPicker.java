@@ -6,6 +6,7 @@ import dev.koifih.client.render.Scissor;
 import dev.koifih.client.render.Text;
 import dev.koifih.client.render.Transform;
 import dev.koifih.client.ui.preview.Catalog;
+import dev.koifih.client.ui.Scroller;
 import dev.koifih.client.ui.Theme;
 import dev.koifih.client.ui.Transition;
 import dev.koifih.client.util.Colors;
@@ -41,7 +42,7 @@ public final class CatalogPicker extends RowPopup {
 
     private final Catalog catalog;
     private final Supplier<Set<String>> selected;
-    private final Transition scrollShown = new Transition(0f, 120);
+    private final Scroller scroller = new Scroller(120);
     private final Transition groupHighlight = new Transition(0f, 150);
     private final Map<String, Transition> checks = new HashMap<>();
     private int windowX;
@@ -55,7 +56,6 @@ public final class CatalogPicker extends RowPopup {
     private List<Row> rows = List.of();
     private String filteredFor;
     private int filteredGroup = -1;
-    private float scroll;
     private Catalog.Entry preview;
     private int lastMouseX = -1;
     private int lastMouseY = -1;
@@ -174,7 +174,7 @@ public final class CatalogPicker extends RowPopup {
     }
 
     private int rowAt(double y) {
-        return (int) ((y - listTop() + scroll) / px(ROW_HEIGHT));
+        return (int) ((y - listTop() + scroller.target()) / px(ROW_HEIGHT));
     }
 
     private Transition check(String id, boolean chosen) {
@@ -183,14 +183,13 @@ public final class CatalogPicker extends RowPopup {
 
     private void setQuery(String value) {
         query = value;
-        scroll = 0f;
+        scroller.top();
         if (preview == null || !contains(preview)) preview = firstEntry();
     }
 
     @Override
     protected void onOpen() {
-        scroll = 0f;
-        scrollShown.snap(0f);
+        scroller.reset();
         if (preview == null) preview = firstEntry();
     }
 
@@ -282,8 +281,7 @@ public final class CatalogPicker extends RowPopup {
 
     private void drawList(GuiGraphicsExtractor graphics) {
         float listX = listX();
-        scrollShown.set(scroll);
-        float scrollOffset = scrollShown.value();
+        float scrollOffset = scroller.shown();
         rect(graphics, listX, listTop(), listWidth(), listHeight(), px(4), Theme.ROW);
         var listArea = new ScreenRectangle(Math.round(listX), Math.round(listTop()), Math.round(listWidth()), Math.round(listHeight()));
         Scissor.clip(listArea, () -> {
@@ -363,7 +361,7 @@ public final class CatalogPicker extends RowPopup {
     @Override
     public boolean mouseScrolled(double x, double y, double dx, double dy) {
         if (!isOpen() || !insidePopup(x, y)) return false;
-        scroll = Math.clamp((float) (scroll - dy * px(ROW_HEIGHT) * 2), 0f, maxScroll());
+        scroller.scroll(-dy * px(ROW_HEIGHT) * 2, maxScroll());
         return true;
     }
 
@@ -381,9 +379,9 @@ public final class CatalogPicker extends RowPopup {
         if (event.key() == GLFW.GLFW_KEY_BACKSPACE && !query.isEmpty()) {
             setQuery(query.substring(0, query.offsetByCodePoints(query.length(), -1)));
         } else if (event.isDown()) {
-            scroll = Math.min(maxScroll(), scroll + px(ROW_HEIGHT));
+            scroller.scroll(px(ROW_HEIGHT), maxScroll());
         } else if (event.isUp()) {
-            scroll = Math.max(0f, scroll - px(ROW_HEIGHT));
+            scroller.scroll(-px(ROW_HEIGHT), maxScroll());
         }
     }
 

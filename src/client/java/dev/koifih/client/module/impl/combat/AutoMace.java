@@ -4,7 +4,6 @@ import dev.koifih.client.AdinClient;
 import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.friends.FriendList;
-import dev.koifih.client.mixin.accessor.MinecraftAccessor;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.module.impl.misc.AntiBot;
 import dev.koifih.client.rotation.Rotation;
@@ -138,8 +137,7 @@ public final class AutoMace extends Module {
     }
 
     private static Player crosshairPlayer() {
-        ((MinecraftAccessor) mc).adin$pick(1f);
-        return mc.hitResult instanceof EntityHitResult hit && hit.getEntity() instanceof Player target && valid(target) ? target : null;
+        return Game.crosshair() instanceof EntityHitResult hit && hit.getEntity() instanceof Player target && valid(target) ? target : null;
     }
 
     private static Player nearestPlayer(LocalPlayer player) {

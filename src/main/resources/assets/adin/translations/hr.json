@@ -107,6 +107,7 @@
   "setting.shieldBreaker.delay": "Odgoda",
   "setting.shieldBreaker.facing": "Okrenut prema tebi",
   "setting.shieldBreaker.switchBack": "Vrati se natrag",
+  "setting.shieldBreaker.stun": "Stun",
   "module.autoMace": "Auto Mace",
   "module.autoMace.description": "Prebacuje na buzdovan i udara igrača kojeg ciljaš kad padaš",
   "setting.autoMace.stunSlam": "Stun slam",

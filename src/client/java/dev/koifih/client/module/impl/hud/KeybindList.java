@@ -15,7 +15,6 @@ import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.ui.Theme;
 import dev.koifih.client.ui.UiScale;
 import dev.koifih.client.util.Lang;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -98,14 +97,14 @@ public final class KeybindList extends HudModule {
         int width = Math.max(bodyWidth, tabWidth + 2 * radius);
         int tabHeight = Math.round(TAB_HEIGHT * scale);
         int bodyHeight = Math.round((BODY_TOP + BODY_BOTTOM + LINE * bound.size()) * scale);
-        var window = Minecraft.getInstance().getWindow();
+        var window = mc.getWindow();
         int x = Math.round(left(width, window.getGuiScaledWidth()));
         int y = Math.round(top(tabHeight + bodyHeight, window.getGuiScaledHeight()));
         return new Layout(scale, x, y, width, tabWidth, tabHeight, bodyHeight, keys, position().horizontal() == Anchor.END);
     }
 
     private void drawShape(GuiGraphicsExtractor graphics, Layout layout) {
-        var window = Minecraft.getInstance().getWindow();
+        var window = mc.getWindow();
         int radius = Math.round(RADIUS * layout.scale());
         boolean flushSide = layout.rightAligned() ? layout.x() + layout.width() >= window.getGuiScaledWidth() : layout.x() <= 0;
         int edges = (flushSide ? StairsState.FLUSH_INNER : 0) | (layout.y() <= 0 ? StairsState.FLUSH_TOP : 0);

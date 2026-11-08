@@ -90,7 +90,7 @@ public final class XbowCart extends Module {
 
     @Override
     protected void onDisable() {
-        stop(Game.player());
+        stop(mc.player);
     }
 
     @Override

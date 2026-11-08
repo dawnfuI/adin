@@ -4,7 +4,6 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -12,14 +11,11 @@ import net.minecraft.world.phys.Vec3;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ManualAim {
     public static Vec3 look(LocalPlayer player) {
-        return Rotation.of(player).direction();
+        return player.getLookAngle();
     }
 
     public static BlockHitResult block(LocalPlayer player, double range) {
-        Vec3 eye = player.getEyePosition();
-        Vec3 end = eye.add(look(player).scale(range));
-        BlockHitResult hit = player.level().clip(new ClipContext(eye, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
-        return hit.getType() == HitResult.Type.BLOCK ? hit : null;
+        return player.pick(range, 1f, false) instanceof BlockHitResult hit && hit.getType() == HitResult.Type.BLOCK ? hit : null;
     }
 
     public static BlockHitResult clicking(LocalPlayer player, BlockPos block) {

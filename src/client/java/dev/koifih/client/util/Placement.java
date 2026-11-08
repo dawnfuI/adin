@@ -141,7 +141,7 @@ public final class Placement {
     }
 
     public static void use(LocalPlayer player, BlockHitResult hit, int slot, boolean quiet, boolean placing) {
-        Minecraft client = Game.mc();
+        Minecraft client = Minecraft.getInstance();
         if (quiet) {
             ItemStack stack = player.getInventory().getItem(slot);
             ((MultiPlayerGameModeAccessor) client.gameMode).adin$startPrediction(client.level, sequence -> {

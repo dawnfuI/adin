@@ -17,7 +17,6 @@ import dev.koifih.client.ui.Units;
 import dev.koifih.client.util.Colors;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -58,7 +57,7 @@ public final class Nametags extends Module {
     }
 
     private void onEntityRenderState(EntityRenderStateEvent event) {
-        if (event.entity() instanceof LivingEntity living && shows(living, Minecraft.getInstance().gameRenderer.mainCamera())) {
+        if (event.entity() instanceof LivingEntity living && shows(living, mc.gameRenderer.mainCamera())) {
             event.state().nameTag = null;
         }
     }
@@ -132,6 +131,6 @@ public final class Nametags extends Module {
 
     private boolean shows(LivingEntity entity, Camera camera) {
         if (entity == camera.entity() && !camera.isDetached()) return false;
-        return targets.accepts(Minecraft.getInstance().player, entity);
+        return targets.accepts(mc.player, entity);
     }
 }

@@ -12,6 +12,7 @@ import dev.koifih.client.render.cape.CapeLayout;
 import dev.koifih.client.render.cape.FileCape;
 import dev.koifih.client.setting.CapePreview;
 import dev.koifih.client.setting.CapeSetting;
+import dev.koifih.client.ui.Scroller;
 import dev.koifih.client.ui.Theme;
 import dev.koifih.client.ui.Transition;
 import dev.koifih.client.ui.clickgui.ClickGui;
@@ -73,7 +74,7 @@ public final class CapeCatalogPage implements Page {
 
     private final ClickGui gui;
     private final CapePreview previewSetting = new CapePreview(this::previewCape);
-    private final Transition scrollShown = new Transition(0f, SCROLL_MILLIS);
+    private final Scroller scroller = new Scroller(SCROLL_MILLIS);
     private final Map<Object, CardAnim> anims = new HashMap<>();
     private boolean freshOpen;
     private boolean snapLayout;
@@ -86,7 +87,6 @@ public final class CapeCatalogPage implements Page {
     private String renameBuffer = "";
     private boolean shown;
     private boolean interactive;
-    private float scroll;
 
     public CapeCatalogPage(ClickGui gui) {
         this.gui = gui;
@@ -95,8 +95,7 @@ public final class CapeCatalogPage implements Page {
 
     public void open(CapeSetting setting) {
         this.setting = setting;
-        scroll = 0f;
-        scrollShown.snap(0f);
+        scroller.reset();
         anims.clear();
         freshOpen = true;
     }
@@ -209,7 +208,7 @@ public final class CapeCatalogPage implements Page {
 
     private Card card(Object key, int index) {
         CardAnim anim = anim(key, index);
-        return new Card(Math.round(anim.x.value()), Math.round(anim.y.value() - scrollShown.value()),
+        return new Card(Math.round(anim.x.value()), Math.round(anim.y.value() - scroller.shown()),
                 layout.scaled(CARD_WIDTH), layout.scaled(CARD_HEIGHT));
     }
 
@@ -230,16 +229,14 @@ public final class CapeCatalogPage implements Page {
     @Override
     public boolean mouseScrolled(double x, double y, double dx, double dy) {
         if (!shown || !interactive || !layout.inContent(x, y) || maxScroll() <= 0f) return false;
-        scroll = Math.clamp((float) (scroll - dy * layout.scaled(CARD_HEIGHT / 2)), 0f, maxScroll());
-        scrollShown.set(scroll);
+        scroller.scroll(-dy * layout.scaled(CARD_HEIGHT / 2), maxScroll());
         return true;
     }
 
     @Override
     public void draw(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (setting == null) return;
-        scroll = Math.clamp(scroll, 0f, maxScroll());
-        scrollShown.set(scroll);
+        scroller.clamp(maxScroll());
         back.extractRenderState(graphics, mouseX, mouseY, delta);
         Text.drawCentered(graphics, Lang.get("capes.title"), back.getX() + back.getWidth() + layout.padding(),
                 back.getY() + back.getHeight() * 0.5f, 9 * layout.scale(), Theme.TEXT);

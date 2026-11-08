@@ -52,7 +52,7 @@ public final class AutoHitCrystal extends Module {
 
     @Override
     protected void onDisable() {
-        restore(Game.player());
+        restore(mc.player);
     }
 
     @Override

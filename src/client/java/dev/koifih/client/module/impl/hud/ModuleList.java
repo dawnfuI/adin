@@ -15,7 +15,6 @@ import dev.koifih.client.setting.TextColorSettings;
 import dev.koifih.client.ui.Theme;
 import dev.koifih.client.ui.UiScale;
 import dev.koifih.client.util.Colors;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,7 +74,7 @@ public final class ModuleList extends HudModule {
             return;
         }
         rows.sort(Comparator.comparingDouble(Row::width).reversed().thenComparing(Row::name));
-        var window = Minecraft.getInstance().getWindow();
+        var window = mc.getWindow();
         int screenWidth = window.getGuiScaledWidth();
         int height = Math.max(1, Math.round(HEIGHT * scale));
         int radius = Math.round(RADIUS * scale);

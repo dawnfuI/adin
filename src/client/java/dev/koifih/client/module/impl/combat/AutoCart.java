@@ -78,7 +78,7 @@ public final class AutoCart extends Module {
 
     @Override
     protected void onDisable() {
-        stop(Game.player());
+        stop(mc.player);
     }
 
     private AbstractArrow firedArrow(LocalPlayer player) {

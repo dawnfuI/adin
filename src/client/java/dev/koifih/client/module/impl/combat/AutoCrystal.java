@@ -70,7 +70,7 @@ public final class AutoCrystal extends Module {
     @Override
     protected void onDisable() {
         releasing = true;
-        restore(Game.player());
+        restore(mc.player);
     }
 
     @Override

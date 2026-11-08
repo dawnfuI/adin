@@ -37,7 +37,7 @@ public final class KeyPearl extends Module {
 
     @Override
     protected void onDisable() {
-        slots.restore(Game.player(), swapBack.get());
+        slots.restore(mc.player, swapBack.get());
     }
 
     @Override

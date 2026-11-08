@@ -2,17 +2,17 @@ package dev.koifih.client.render.screen;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import com.mojang.math.Axis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import dev.koifih.client.mixin.accessor.GameRendererAccessor;
 import dev.koifih.client.render.Corners;
 import dev.koifih.client.render.Point;
 import dev.koifih.client.render.Rect;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.state.GameRenderState;
 import net.minecraft.client.renderer.state.OptionsRenderState;
 import net.minecraft.client.renderer.state.WindowRenderState;
-import net.minecraft.client.renderer.state.level.CameraEntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -40,11 +40,12 @@ public final class Projection implements Projector {
     }
 
     public static Projection capture() {
-        GameRenderState state = Minecraft.getInstance().gameRenderer.gameRenderState();
+        GameRenderer renderer = Minecraft.getInstance().gameRenderer;
+        GameRenderState state = renderer.gameRenderState();
         CameraRenderState camera = state.levelRenderState.cameraRenderState;
         WindowRenderState window = state.windowRenderState;
         float pixel = 1f / Math.max(1, window.guiScale);
-        return new Projection(viewProjection(camera, state.optionsRenderState), camera.pos,
+        return new Projection(viewProjection((GameRendererAccessor) renderer, camera, state.optionsRenderState), camera.pos,
                 window.width * pixel, window.height * pixel, pixel);
     }
 
@@ -96,33 +97,10 @@ public final class Projection implements Projector {
         return new Vector4f(a).lerp(b, (NEAR - a.w) / (b.w - a.w));
     }
 
-    private static Matrix4f viewProjection(CameraRenderState camera, OptionsRenderState options) {
-        Matrix4f bob = new Matrix4f();
-        hurtTilt(camera.entityRenderState, options, bob);
-        if (options.bobView) viewBob(camera.entityRenderState, bob);
-        return new Matrix4f(camera.projectionMatrix).mul(bob).mul(camera.viewRotationMatrix);
-    }
-
-    private static void hurtTilt(CameraEntityRenderState entity, OptionsRenderState options, Matrix4f pose) {
-        if (!entity.isLiving) return;
-        if (entity.isDeadOrDying) {
-            float death = Math.min(entity.deathTime, 20f);
-            pose.rotate(Axis.ZP.rotationDegrees(40f - 8000f / (death + 200f)));
-        }
-        if (entity.hurtTime < 0f) return;
-        float progress = entity.hurtTime / entity.hurtDuration;
-        float tilt = Mth.sin(progress * progress * progress * progress * Mth.PI);
-        pose.rotate(Axis.YP.rotationDegrees(-entity.hurtDir));
-        pose.rotate(Axis.ZP.rotationDegrees((float) (-tilt * 14.0 * options.damageTiltStrength)));
-        pose.rotate(Axis.YP.rotationDegrees(entity.hurtDir));
-    }
-
-    private static void viewBob(CameraEntityRenderState entity, Matrix4f pose) {
-        if (!entity.isPlayer) return;
-        float walk = entity.backwardsInterpolatedWalkDistance;
-        float bob = entity.bob;
-        pose.translate(Mth.sin(walk * Mth.PI) * bob * 0.5f, -Math.abs(Mth.cos(walk * Mth.PI) * bob), 0f);
-        pose.rotate(Axis.ZP.rotationDegrees(Mth.sin(walk * Mth.PI) * bob * 3f));
-        pose.rotate(Axis.XP.rotationDegrees(Math.abs(Mth.cos(walk * Mth.PI - 0.2f) * bob) * 5f));
+    private static Matrix4f viewProjection(GameRendererAccessor renderer, CameraRenderState camera, OptionsRenderState options) {
+        PoseStack bob = new PoseStack();
+        renderer.adin$bobHurt(camera, bob);
+        if (options.bobView) renderer.adin$bobView(camera, bob);
+        return new Matrix4f(camera.projectionMatrix).mul(bob.last().pose()).mul(camera.viewRotationMatrix);
     }
 }

@@ -107,6 +107,7 @@
   "setting.shieldBreaker.delay": "Opóźnienie",
   "setting.shieldBreaker.facing": "Patrzy na ciebie",
   "setting.shieldBreaker.switchBack": "Przełącz z powrotem",
+  "setting.shieldBreaker.stun": "Stun",
   "module.autoMace": "Auto Mace",
   "module.autoMace.description": "Przełącza na buzdygan i miażdży gracza, w którego celujesz, gdy spadasz",
   "setting.autoMace.stunSlam": "Stun slam",

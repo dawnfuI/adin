@@ -20,7 +20,6 @@ import dev.koifih.client.setting.Setting;
 import dev.koifih.client.setting.SliderSetting;
 import dev.koifih.client.util.Entities;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -137,7 +136,7 @@ public final class Esp extends Module {
 
     private void onEntityRenderState(EntityRenderStateEvent event) {
         if (!shaded() && !outlined()) return;
-        Camera camera = Minecraft.getInstance().gameRenderer.mainCamera();
+        Camera camera = mc.gameRenderer.mainCamera();
         Entity entity = event.entity();
         double distanceSq = entity.distanceToSqr(camera.position());
         boolean targeted = targeted(entity, camera) && distanceSq <= range();

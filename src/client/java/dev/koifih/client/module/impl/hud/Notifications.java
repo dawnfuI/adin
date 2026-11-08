@@ -15,7 +15,6 @@ import dev.koifih.client.ui.Theme;
 import dev.koifih.client.ui.Transition;
 import dev.koifih.client.ui.UiScale;
 import dev.koifih.client.util.Colors;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +91,7 @@ public final class Notifications extends Module {
         if (toasts.isEmpty()) return;
         Theme.update();
         float scale = UiScale.current().factor();
-        float centerX = Minecraft.getInstance().getWindow().getGuiScaledWidth() * 0.5f;
+        float centerX = mc.getWindow().getGuiScaledWidth() * 0.5f;
         Text.ColorAt color = colors.colorAt(scale);
         for (Toast toast : toasts) draw(event.graphics(), toast, centerX, scale, color);
     }

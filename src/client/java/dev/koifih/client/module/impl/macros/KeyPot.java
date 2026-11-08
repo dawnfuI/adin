@@ -51,7 +51,7 @@ public final class KeyPot extends Module {
     @Override
     protected void onDisable() {
         pending.clear();
-        slots.restore(Game.player(), true);
+        slots.restore(mc.player, true);
     }
 
     @Override

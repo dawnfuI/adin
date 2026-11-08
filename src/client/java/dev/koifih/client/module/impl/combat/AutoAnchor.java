@@ -58,7 +58,7 @@ public final class AutoAnchor extends Module {
 
     @Override
     protected void onDisable() {
-        idle(Game.player());
+        idle(mc.player);
     }
 
     private void onTick(PreTickEvent event) {

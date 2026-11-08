@@ -2,7 +2,6 @@ package dev.koifih.client.module.impl.combat;
 
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.friends.FriendList;
-import dev.koifih.client.mixin.accessor.MinecraftAccessor;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.setting.BoolSetting;
 import dev.koifih.client.setting.Measure;
@@ -24,8 +23,10 @@ public final class ShieldBreaker extends Module {
     private final SliderSetting delay = add(new SliderSetting("delay", 100, 50, 500, Measure.MILLIS));
     private final BoolSetting facing = add(new BoolSetting("facing", true));
     private final BoolSetting switchBack = add(new BoolSetting("switchBack", true));
+    private final BoolSetting stun = add(new BoolSetting("stun", false));
     private final Time.Ticker sinceSwitch = new Time.Ticker();
     private final SlotSwap slots = new SlotSwap();
+    private Player stunned;
 
     public ShieldBreaker() {
         super("shieldBreaker");
@@ -38,26 +39,39 @@ public final class ShieldBreaker extends Module {
 
     @Override
     protected void onDisable() {
+        stunned = null;
         slots.restore(mc.player, switchBack.get());
     }
 
     private void onTick() {
         LocalPlayer player = mc.player;
+        Player target = stunned;
+        stunned = null;
+        if (target != null) {
+            slots.restore(player, switchBack.get());
+            if (Game.playing() && crosshairPlayer(player) == target) hit(player, target);
+            return;
+        }
         if (slots.swapped()) {
             if (!switchBack.get() || sinceSwitch.elapsed(delay.get())) slots.restore(player, switchBack.get());
             return;
         }
         if (!Game.playing() || using(player) || player.getAttackStrengthScale(0.5f) < 1f) return;
-        Player target = crosshairPlayer(player);
+        target = crosshairPlayer(player);
         if (target == null || !shielded(player, target) || !holdAxe(player)) return;
+        hit(player, target);
+        if (stun.get()) stunned = target;
+    }
+
+    public void prepare(LocalPlayer player, Entity target) {
+        if (isEnabled() && !using(player) && target instanceof Player other && shielded(player, other) && holdAxe(player) && stun.get()) stunned = other;
+    }
+
+    private void hit(LocalPlayer player, Player target) {
         if (!Clicks.left(mc, target)) {
             mc.gameMode.attack(player, target);
             player.swing(InteractionHand.MAIN_HAND);
         }
-    }
-
-    public void prepare(LocalPlayer player, Entity target) {
-        if (isEnabled() && !using(player) && target instanceof Player other && shielded(player, other)) holdAxe(player);
     }
 
     private boolean holdAxe(LocalPlayer player) {
@@ -77,8 +91,7 @@ public final class ShieldBreaker extends Module {
     }
 
     private static Player crosshairPlayer(LocalPlayer player) {
-        ((MinecraftAccessor) mc).adin$pick(1f);
-        if (!(mc.hitResult instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)) return null;
+        if (!(Game.crosshair() instanceof EntityHitResult hit) || !(hit.getEntity() instanceof Player target)) return null;
         return target != player && target.isAlive() && !FriendList.protects(target) ? target : null;
     }
 }

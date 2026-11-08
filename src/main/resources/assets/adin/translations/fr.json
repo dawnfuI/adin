@@ -107,6 +107,7 @@
   "setting.shieldBreaker.delay": "Délai",
   "setting.shieldBreaker.facing": "Te fait face",
   "setting.shieldBreaker.switchBack": "Revenir à l'arme",
+  "setting.shieldBreaker.stun": "Stun",
   "module.autoMace": "Auto Mace",
   "module.autoMace.description": "Passe à ta masse et écrase le joueur que tu vises quand tu tombes",
   "setting.autoMace.stunSlam": "Stun slam",

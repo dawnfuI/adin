@@ -4,8 +4,8 @@ import dev.koifih.client.friends.FriendList;
 import dev.koifih.client.render.Draw;
 import dev.koifih.client.render.Scissor;
 import dev.koifih.client.render.Text;
+import dev.koifih.client.ui.Scroller;
 import dev.koifih.client.ui.Theme;
-import dev.koifih.client.ui.Transition;
 import dev.koifih.client.ui.clickgui.ClickGui;
 import dev.koifih.client.ui.clickgui.Page;
 import dev.koifih.client.ui.clickgui.PanelLayout;
@@ -47,7 +47,7 @@ public final class FriendsPage implements Page {
     private record Row(String name, PlayerSkin skin, boolean online, Bool toggle) {}
 
     private final ClickGui gui;
-    private final Transition scrollShown = new Transition(0f, SCROLL_MILLIS);
+    private final Scroller scroller = new Scroller(SCROLL_MILLIS);
     private final List<Row> rows = new ArrayList<>();
     private final List<Row> visible = new ArrayList<>();
     private PanelLayout layout;
@@ -60,14 +60,12 @@ public final class FriendsPage implements Page {
     private int toggleHeight;
     private boolean shown;
     private boolean interactive;
-    private float scroll;
 
     @Override
     public void init(PanelLayout layout) {
         this.layout = layout;
         rows.clear();
-        scroll = 0f;
-        scrollShown.snap(0f);
+        scroller.reset();
         lastSync = System.currentTimeMillis();
         float scale = layout.scale();
         searchInput = gui.add(new TextInput(layout.rowX(), inputY(), layout.rowWidth(), layout.atLeastOne(INPUT_HEIGHT), scale,
@@ -142,7 +140,7 @@ public final class FriendsPage implements Page {
         String needle = query.trim().toLowerCase(Locale.ROOT);
         visible.clear();
         for (Row row : rows) if (needle.isEmpty() || row.name().toLowerCase(Locale.ROOT).contains(needle)) visible.add(row);
-        scroll = Math.clamp(scroll, 0f, maxScroll());
+        scroller.clamp(maxScroll());
     }
 
     private int inputY() {
@@ -158,7 +156,7 @@ public final class FriendsPage implements Page {
     }
 
     private int cardY(int index) {
-        return listTop() + index * layout.atLeastOne(CARD_STRIDE) - Math.round(scrollShown.value());
+        return listTop() + index * layout.atLeastOne(CARD_STRIDE) - Math.round(scroller.shown());
     }
 
     private int listSpan() {
@@ -209,8 +207,7 @@ public final class FriendsPage implements Page {
     @Override
     public boolean mouseScrolled(double x, double y, double dx, double dy) {
         if (!shown || !interactive || !layout.inContent(x, y) || maxScroll() <= 0f) return false;
-        scroll = Math.clamp((float) (scroll - dy * layout.atLeastOne(CARD_STRIDE)), 0f, maxScroll());
-        scrollShown.set(scroll);
+        scroller.scroll(-dy * layout.atLeastOne(CARD_STRIDE), maxScroll());
         return true;
     }
 
@@ -218,7 +215,6 @@ public final class FriendsPage implements Page {
     public void draw(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
         if (shown) sync();
         if (!query.equals(lastQuery)) filter();
-        scrollShown.set(scroll);
         layoutRows();
         updateStates();
         searchInput.extractRenderState(graphics, mouseX, mouseY, delta);
@@ -275,7 +271,7 @@ public final class FriendsPage implements Page {
 
     private void drawFade(GuiGraphicsExtractor graphics) {
         int height = Math.min(layout.scaled(FADE_HEIGHT), layout.bottom() - listTop());
-        float remaining = maxScroll() - scrollShown.value();
+        float remaining = maxScroll() - scroller.shown();
         if (remaining <= 0f || height <= 0) return;
         int bottom = Colors.withAlpha(Theme.MAIN, Math.clamp(remaining / height, 0f, 1f));
         Draw.gradient(graphics, layout.contentX(), layout.bottom() - height, layout.contentWidth(), height,

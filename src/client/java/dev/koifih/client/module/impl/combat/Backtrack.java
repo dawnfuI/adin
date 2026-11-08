@@ -152,7 +152,7 @@ public final class Backtrack extends Module {
     }
 
     private boolean withinReach(LocalPlayer player) {
-        return reachDistanceSqr(target, tracked.position(), player.getEyePosition()) <= square(player.entityInteractionRange());
+        return player.isWithinEntityInteractionRange(target.getBoundingBox().move(tracked.position().subtract(target.position())), 0);
     }
 
     private void release() {
@@ -173,7 +173,7 @@ public final class Backtrack extends Module {
     }
 
     private static boolean reachable(LocalPlayer player, LivingEntity entity) {
-        return boxedDistanceSqr(entity, entity.position(), player.getEyePosition()) <= square(player.entityInteractionRange());
+        return player.isWithinEntityInteractionRange(entity.getBoundingBox().inflate(entity.getPickRadius()), 0);
     }
 
     private boolean shouldBacktrack(LocalPlayer player, LivingEntity entity) {
@@ -195,14 +195,6 @@ public final class Backtrack extends Module {
     private static double boxedDistanceSqr(Entity entity, Vec3 at, Vec3 from) {
         AABB box = entity.getBoundingBox().inflate(entity.getPickRadius());
         return box.move(at.subtract(entity.position())).distanceToSqr(from);
-    }
-
-    private static double reachDistanceSqr(Entity entity, Vec3 at, Vec3 from) {
-        return entity.getBoundingBox().move(at.subtract(entity.position())).distanceToSqr(from);
-    }
-
-    private static double square(double value) {
-        return value * value;
     }
 
     private void onWorldRender(WorldRenderEvent event) {
