@@ -7,3 +7,5 @@
 - General code clean ups 
 - Fixed performance issues 
 - Fixed shield breaker switching not attacking or just missing or attacking and disobeying the 5 tick block window ;3 
+- ShieldBreaker stun
+- AutoWindCharge

@@ -32,7 +32,7 @@ public final class ModuleManager {
     private static final String IMPL = "dev/koifih/client/module/impl";
     private static final List<String> ORDER = List.of(
             "AimAssist", "Triggerbot", "ShieldBreaker", "AutoMace", "AutoHitCrystal", "AutoCrystal", "AutoAnchor", "AutoCart", "XbowCart", "Backtrack",
-            "Sprint", "SprintReset", "MoveFix", "JumpReset",
+            "Sprint", "SprintReset", "MoveFix", "JumpReset", "AutoWindCharge",
             "Esp", "Nametags", "BlockEsp", "Capes", "WorldModifier",
             "Notifications", "ModuleList", "Watermark", "KeybindList",
             "AutoTotem", "Refill",
