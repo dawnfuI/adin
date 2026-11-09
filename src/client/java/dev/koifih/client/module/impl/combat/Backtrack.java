@@ -3,15 +3,12 @@ package dev.koifih.client.module.impl.combat;
 import dev.koifih.client.AdinClient;
 import dev.koifih.client.backtrack.Backtracker;
 import dev.koifih.client.backtrack.TrackedEntity;
-import dev.koifih.client.event.Priority;
 import dev.koifih.client.event.events.AttackEvent;
 import dev.koifih.client.event.events.PacketProcessEvent;
 import dev.koifih.client.event.events.PreTickEvent;
 import dev.koifih.client.event.events.WorldRenderEvent;
 import dev.koifih.client.module.Module;
 import dev.koifih.client.render.entity.Ghost;
-import dev.koifih.client.rotation.RotationConfig;
-import dev.koifih.client.rotation.Smoothing;
 import dev.koifih.client.setting.BacktrackPreview;
 import dev.koifih.client.setting.BoolSetting;
 import dev.koifih.client.setting.EnumSetting;
@@ -32,8 +29,6 @@ public final class Backtrack extends Module {
     private static final int MODE_FREEZE = 1;
     private static final long TRACKING_BUFFER_MILLIS = 500L;
     private static final long ATTACK_WINDOW_MILLIS = 1000L;
-    private static final long MAX_FREEZE_MILLIS = 1000L;
-    private static final RotationConfig SNAP = RotationConfig.silent(0f, Smoothing.EASE_OUT_CUBIC);
     private static final int MIN_TICKS = 10;
     private static final int HURT_TIME = 3;
     private static final float HALF_LIFE_TICKS = 2f;
@@ -121,10 +116,6 @@ public final class Backtrack extends Module {
         if (enemy != null) acquire(player, enemy);
         if (target != null) tracked.tick(target);
         updateHold(player);
-        if (frozen() && target != null && Backtracker.isLagging()) {
-            Vec3 point = tracked.position().add(0, target.getBbHeight() * 0.5, 0);
-            AdinClient.ROTATIONS.aim(player, point, Priority.HIGH, SNAP);
-        }
     }
 
     private void acquire(LocalPlayer player, LivingEntity enemy) {
@@ -136,23 +127,9 @@ public final class Backtrack extends Module {
 
     private boolean updateHold(LocalPlayer player) {
         boolean holding = target != null && target.isAlive() && target.level() == mc.level
-                && (frozen() ? freezing(player) : shouldBacktrack(player, target));
+                && (frozen() || shouldBacktrack(player, target));
         Backtracker.hold(holding);
         return holding;
-    }
-
-    private boolean freezing(LocalPlayer player) {
-        return Backtracker.heldMillis() < MAX_FREEZE_MILLIS && withinReach(player);
-    }
-
-    public boolean permits(Entity attacked) {
-        if (!isEnabled() || !frozen() || target == null || attacked != target) return true;
-        LocalPlayer player = mc.player;
-        return player == null || withinReach(player);
-    }
-
-    private boolean withinReach(LocalPlayer player) {
-        return player.isWithinEntityInteractionRange(target.getBoundingBox().move(tracked.position().subtract(target.position())), 0);
     }
 
     private void release() {

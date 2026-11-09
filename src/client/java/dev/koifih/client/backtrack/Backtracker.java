@@ -83,11 +83,6 @@ public final class Backtracker {
         return !QUEUE.isEmpty();
     }
 
-    public static long heldMillis() {
-        Held head = QUEUE.peek();
-        return head == null ? 0L : System.currentTimeMillis() - head.at;
-    }
-
     public static Iterable<Held> held() {
         return QUEUE;
     }
